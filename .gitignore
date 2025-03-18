@@ -1,0 +1,6 @@
+# Mac files
+.DS_Store
+._*
+
+# Ansible Galaxy
+galaxy.yml

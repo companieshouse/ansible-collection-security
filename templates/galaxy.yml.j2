@@ -1,0 +1,20 @@
+namespace: "companieshouse"
+name: "general"
+version: "{{ version }}"
+readme: "README.md"
+authors:
+  - "Marc Ransome <mransome@companieshouse.gov.uk>"
+description: "A collection comprising general Ansible roles and playbooks for use in Companies House projects"
+license_file: "LICENSE"
+tags:
+  - aws
+  - journald
+  - ssh
+  - systemd
+dependencies:
+  "ansible.posix": ">=1.5.4"
+  "community.hashi_vault": ">=6.2.0"
+
+repository: "https://github.com/companieshouse/ansible-collection-security"
+build_ignore:
+  - templates

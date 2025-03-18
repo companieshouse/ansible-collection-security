@@ -1,0 +1,25 @@
+---
+# Required packages
+additional_packages:
+  - openscap-scanner
+  - scap-security-guide
+  - lynx
+  - findutils
+  - procps
+  - passwd
+  - hostname
+  - systemd-journal-remote
+  - sysstat
+
+# OpenSCAP configuration
+oscap_profile: xccdf_org.ssgproject.content_profile_cis_server_l1
+oscap_content_path: /usr/share/xml/scap/ssg/content/ssg-rhel9-ds.xml
+oscap_results_dir: ~/
+oscap_report_format: html
+
+# Lynis configuration
+lynis_repo: "https://github.com/CISOfy/lynis.git"
+lynis_version: master
+lynis_install_dir: $HOME/lynis
+lynis_keep_reports: true
+lynis_cleanup_after_run: true

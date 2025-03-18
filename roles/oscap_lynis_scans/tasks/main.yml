@@ -1,0 +1,93 @@
+---
+### Install Required Packages ###
+- name: Install required packages
+  ansible.builtin.package:
+    name: "{{ additional_packages }}"
+    state: present
+  become: true
+
+### Level 1 CIS Scan ###
+- name: Level 1 CIS - Set datetime variable
+  ansible.builtin.set_fact:
+    datetime: "{{ lookup('pipe', 'date +%Y%m%d_%H%M%S') }}"
+
+- name: Level 1 CIS - Scan
+  ansible.builtin.command: >
+    oscap xccdf eval
+    --profile {{ oscap_profile }}
+    --results {{ oscap_results_dir }}OpenScap_Results_{{ datetime }}.xml
+    {{ oscap_content_path }}
+  register: oscap_scan
+  failed_when: oscap_scan.rc == 1
+  changed_when: false
+
+- name: Level 1 CIS - Generate Report
+  ansible.builtin.command: >
+    oscap xccdf generate report
+    --output {{ oscap_results_dir }}OpenScap_Report_{{ datetime }}.html
+    {{ oscap_results_dir }}OpenScap_Results_{{ datetime }}.xml
+  when: oscap_scan is succeeded
+  register: oscap_report
+  changed_when: false
+
+- name: Level 1 CIS - Extract Score
+  ansible.builtin.shell: >
+    set -o pipefail &&
+    sed -n 's/.*<score[^>]*>\([0-9]\+\.[0-9]\+\)<\/score>.*/\1/p' {{ oscap_results_dir }}OpenScap_Results_{{ datetime }}.xml
+    | xargs printf "%.2f\n"
+  args:
+    executable: /bin/bash
+  when: oscap_report is succeeded
+  register: cis_compliance_score
+  changed_when: false
+
+- name: Level 1 CIS - Display Score and Report Location
+  ansible.builtin.debug:
+    msg:
+      - "Level 1 CIS Compliance Score: {{ cis_compliance_score.stdout }}%"
+      - "Full report: lynx {{ oscap_results_dir }}OpenScap_Report_{{ datetime }}.html"
+
+### Lynis Scan ###
+- name: Clone git repository
+  ansible.builtin.git:
+    repo: "{{ lynis_repo }}"
+    dest: "{{ lynis_install_dir }}"
+    clone: true
+    version: "{{ lynis_version }}"
+
+- name: Confirm lynis folder
+  ansible.builtin.find:
+    paths: "{{ lynis_install_dir | dirname }}"
+    patterns: "{{ lynis_install_dir | basename }}*"
+    recurse: true
+    file_type: directory
+  register: found_directories
+
+- name: Display found lynis directories
+  ansible.builtin.debug:
+    msg: "{{ [item.path] }}"
+  with_items: "{{ found_directories.files }}"
+
+- name: Run scan and output to file
+  ansible.builtin.shell: ./lynis audit system > "$(hostname -s)_$(date +%d-%m-%Y).report"
+  args:
+    chdir: "{{ lynis_install_dir }}"
+  changed_when: true
+
+- name: Print out report
+  ansible.builtin.shell: cat "$(hostname -s)_$(date +%d-%m-%Y).report"
+  args:
+    chdir: "{{ lynis_install_dir }}"
+  register: lynis_report
+  changed_when: false
+
+- name: Display lynis report
+  ansible.builtin.debug:
+    msg: "{{ [item] }} "
+  with_items: "{{ lynis_report.stdout }}"
+
+- name: Remove lynis folder
+  ansible.builtin.file:
+    path: "{{ lynis_install_dir }}"
+    state: absent
+  when: lynis_cleanup_after_run | bool
