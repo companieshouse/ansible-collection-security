@@ -1,5 +1,5 @@
 galaxy_info:
-  role_name: oscap_lynis_scans
+  role_name: security_scans
   author: Companies House
   description: Install required packages for oscap and lynis then run both scans
   company: Companies House
