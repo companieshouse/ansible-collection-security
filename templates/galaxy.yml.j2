@@ -1,16 +1,24 @@
 namespace: "companieshouse"
-name: "general"
+name: "security"
 version: "{{ version }}"
 readme: "README.md"
 authors:
-  - "Marc Ransome <mransome@companieshouse.gov.uk>"
-description: "A collection comprising general Ansible roles and playbooks for use in Companies House projects"
+  - "samh241 & ls-comh"
+description: "A collection comprising security Ansible roles and playbooks for use in Companies House projects"
 license_file: "LICENSE"
 tags:
   - aws
   - journald
   - ssh
   - systemd
+  - cis
+  - compliance
+  - hardening
+  - lynis
+  - oscap
+  - scan
+  - score
+  - security
 dependencies:
   "ansible.posix": ">=1.5.4"
   "community.hashi_vault": ">=6.2.0"
