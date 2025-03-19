@@ -1,4 +1,4 @@
-# Ansible Role: OpenSCAP & Lynis Scans
+# Ansible Role: Security Scans (OpenSCAP & Lynis)
 
 An [Ansible Galaxy](https://galaxy.ansible.com/) role to install OpenSCAP and Lynis, then run the scans. The results can be seen in the stdout during provisioning, and the full CIS Level 1 report is stored in ~ with a datetime.
 
