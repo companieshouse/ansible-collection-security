@@ -1,0 +1,27 @@
+# Required packages
+security_scans_required_packages:
+  - openscap-scanner
+  - scap-security-guide
+  - lynx
+  - findutils
+  - procps
+  - passwd
+  - hostname
+  - systemd-journal-remote
+  - sysstat
+
+# OpenSCAP configuration
+security_scans_oscap_target_os: rhel9
+security_scans_oscap_profile_type: cis_server  # Options: cis_server, cis_workstation, stig
+security_scans_oscap_cis_level: 1  # For CIS profiles: 1 or 2, ignored for STIG
+security_scans_oscap_results_dir: ~/
+security_scans_oscap_report_format: html
+# OpenSCAP configuration debug
+security_scans_oscap_list_available_datastreams: false
+
+# Lynis configuration
+security_scans_lynis_repo_url: "https://github.com/CISOfy/lynis.git"
+security_scans_lynis_branch: master
+security_scans_lynis_install_path: $HOME/lynis
+security_scans_lynis_retain_reports: true
+security_scans_lynis_cleanup: true

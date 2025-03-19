@@ -1,0 +1,24 @@
+namespace: "companieshouse"
+name: "security"
+version: "{{ version }}"
+readme: "README.md"
+authors:
+  - "samh241 & ls-comh"
+description: "A collection comprising security Ansible roles and playbooks for use in Companies House projects"
+license_file: "LICENSE"
+tags:
+  - cis
+  - compliance
+  - hardening
+  - lynis
+  - oscap
+  - scan
+  - score
+  - security
+dependencies:
+  "ansible.posix": ">=1.5.4"
+  "community.hashi_vault": ">=6.2.0"
+
+repository: "https://github.com/companieshouse/ansible-collection-security"
+build_ignore:
+  - templates
