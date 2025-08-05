@@ -27,17 +27,17 @@
   changed_when: true
   become: true
 
-- name: Read lynis report file
-  ansible.builtin.slurp:
-    src: "{{ security_scans_temp_scan_dir.path }}/lynis.report"
-  register: security_scans_lynis_report_raw
+- name: Print report
+  ansible.builtin.shell: |
+    set -o pipefail &&
+    cat "{{ security_scans_temp_scan_dir.path }}/lynis.report" | awk '/- Report data/ {exit} {print}'
+  args:
+    executable: /bin/bash
+  register: security_scans_lynis_report
+  changed_when: false
   become: true
-
-- name: Extract simplified lynis report (scan progress and summary)
-  ansible.builtin.set_fact:
-    security_scans_lynis_report:
-      stdout: "{{ (security_scans_lynis_report_raw.content | b64decode).split('- Report data')[0].split('\n') }}"
 
 - name: Display lynis report
   ansible.builtin.debug:
-    msg: "{{ security_scans_lynis_report.stdout }}"
+    msg: "{{ [item] }}"
+  with_items: "{{ security_scans_lynis_report.stdout }}"
