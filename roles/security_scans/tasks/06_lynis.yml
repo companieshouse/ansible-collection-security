@@ -1,0 +1,44 @@
+---
+- name: Clone or update lynis repository
+  ansible.builtin.git:
+    repo: "{{ security_scans_lynis_repo_url }}"
+    dest: "{{ security_scans_lynis_install_path }}"
+    version: "{{ security_scans_lynis_branch }}"
+    update: true
+  become: true
+
+- name: Confirm lynis directory
+  ansible.builtin.find:
+    paths: "{{ security_scans_lynis_install_path | dirname }}"
+    patterns: "{{ security_scans_lynis_install_path | basename }}*"
+    recurse: true
+    file_type: directory
+  register: security_scans_found_directories
+
+- name: Display found lynis directories
+  ansible.builtin.debug:
+    msg: "{{ [item.path] }}"
+  with_items: "{{ security_scans_found_directories.files }}"
+
+- name: Run lynis scan and save to results directory
+  ansible.builtin.shell: ./lynis audit system > "{{ security_scans_temp_scan_dir.path }}/lynis.report"
+  args:
+    chdir: "{{ security_scans_lynis_install_path }}"
+  changed_when: true
+  become: true
+
+- name: Read lynis report file
+  ansible.builtin.slurp:
+    src: "{{ security_scans_temp_scan_dir.path }}/lynis.report"
+  register: security_scans_lynis_report_raw
+  become: true
+
+- name: Extract simplified lynis report (scan progress and summary)
+  ansible.builtin.set_fact:
+    security_scans_lynis_report:
+      stdout: "{{ (security_scans_lynis_report_raw.content | b64decode).split('- Report data')[0].split('\n') }}"
+
+- name: Display lynis report
+  ansible.builtin.debug:
+    msg: "{{ [item] }} "
+  with_items: "{{ security_scans_lynis_report.stdout }}"

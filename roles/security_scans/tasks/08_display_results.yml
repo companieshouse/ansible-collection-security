@@ -1,0 +1,48 @@
+---
+- name: Extract oscap compliance score
+  ansible.builtin.shell: >
+    set -o pipefail &&
+    sed -n 's/.*<score[^>]*>\([0-9]\+\.[0-9]\+\)<\/score>.*/\1/p'
+    {{ security_scans_base_dir }}/{{ security_scans_datetime }}/oscap.xml
+    | xargs printf "%.2f\n"
+  args:
+    executable: /bin/bash
+  register: security_scans_cis_compliance_score
+  changed_when: false
+  become: true
+  failed_when: false
+
+- name: Extract lynis hardening index
+  ansible.builtin.shell: >
+    set -o pipefail &&
+    grep "Hardening index" "{{ security_scans_base_dir }}/{{ security_scans_datetime }}/lynis.report" |
+    sed 's/.*Hardening index : \[\([0-9]*\)\].*/\1/'
+  register: security_scans_lynis_hardening_index
+  changed_when: false
+  become: true
+  failed_when: false
+
+- name: Set human-readable profile name
+  ansible.builtin.set_fact:
+    security_scans_oscap_profile_display: >-
+      {%- if security_scans_oscap_profile == 'cis_server_l1' -%}
+      CIS LEVEL 1{%- elif security_scans_oscap_profile == 'cis' -%}
+      CIS LEVEL 2{%- elif security_scans_oscap_profile == 'stig' -%}
+      DISA STIG{%- else -%}
+      {{ security_scans_oscap_profile | upper }}{%- endif -%}
+
+- name: Set security scan scores as pipeline statistics
+  ansible.builtin.set_stats:
+    data:
+      OSCAP_SCORE: "{{ security_scans_cis_compliance_score.stdout | default('N/A') }}"
+      LYNIS_SCORE: "{{ security_scans_lynis_hardening_index.stdout | default('N/A') }}"
+      OSCAP_PROFILE_DISPLAY: "{{ security_scans_oscap_profile_display }}"
+
+- name: Display security scan scores summary
+  ansible.builtin.debug:
+    msg:
+      - "=== Security Scan Results ==="
+      - "Scan completed: {{ security_scans_datetime }}"
+      - "OpenSCAP {{ security_scans_oscap_profile }} Score: {{ security_scans_cis_compliance_score.stdout | default('N/A') }}%"
+      - "Lynis Hardening Index: {{ security_scans_lynis_hardening_index.stdout | default('N/A') }}"
+      - "Reports available at: {{ security_scans_base_dir }}/{{ security_scans_datetime }}/"

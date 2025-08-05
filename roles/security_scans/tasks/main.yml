@@ -1,135 +1,24 @@
 ---
-#################################
-### Install Required Packages ###
-#################################
-- name: Install required packages
-  ansible.builtin.package:
-    name: "{{ security_scans_required_packages }}"
-    state: present
-  become: true
+- name: Install packages and create directories
+  ansible.builtin.include_tasks: 01_setup.yml
 
-######################
-### OpenSCAP DEBUG ###
-######################
-- name: List available datastreams
-  ansible.builtin.shell: set -o pipefail && ls -la /usr/share/xml/scap/ssg/content/ | grep -E 'ssg-.*-ds\.xml'
-  args:
-    executable: /bin/bash
-  register: available_datastreams
-  changed_when: false
-  when: security_scans_oscap_list_available_datastreams | bool
+- name: Validate system requirements and datastreams
+  ansible.builtin.include_tasks: 02_validation.yml
 
-- name: Display available datastreams
-  ansible.builtin.debug:
-    msg: "Available datastreams on this system: {{ available_datastreams.stdout_lines }}"
-  when: security_scans_oscap_list_available_datastreams | bool
+- name: Clean up old scans and manage retention
+  ansible.builtin.include_tasks: 03_cleanup.yml
 
-- name: Verify target datastream exists
-  ansible.builtin.stat:
-    path: "/usr/share/xml/scap/ssg/content/ssg-{{ security_scans_oscap_target_os }}-ds.xml"
-  register: target_datastream_stat
+- name: Initialise scan workspace directory
+  ansible.builtin.include_tasks: 04_initialise.yml
 
-- name: Fail if target datastream doesn't exist
-  ansible.builtin.fail:
-    msg: >
-      The specified datastream 'ssg-{{ security_scans_oscap_target_os }}-ds.xml' does not exist.
-      Available datastreams: {{ available_datastreams.stdout_lines | default(['None found']) }}
-  when: not target_datastream_stat.stat.exists
+- name: Execute OpenSCAP security scan
+  ansible.builtin.include_tasks: 05_openscap.yml
 
-#####################
-### OpenSCAP Scan ###
-#####################
-- name: OpenSCAP - Set datetime variable
-  ansible.builtin.set_fact:
-    datetime: "{{ lookup('pipe', 'date +%Y%m%d_%H%M%S') }}"
+- name: Execute Lynis security audit
+  ansible.builtin.include_tasks: 06_lynis.yml
 
-- name: OpenSCAP - Set content path
-  ansible.builtin.set_fact:
-    oscap_content_path: "/usr/share/xml/scap/ssg/content/ssg-{{ security_scans_oscap_target_os }}-ds.xml"
+- name: Validate completeness and store scan results
+  ansible.builtin.include_tasks: 07_validate_and_store.yml
 
-- name: OpenSCAP - Set profile based on CIS level
-  ansible.builtin.set_fact:
-    security_scans_oscap_profile: "xccdf_org.ssgproject.content_profile_cis_server_l{{ security_scans_oscap_cis_level }}"
-
-- name: OpenSCAP - Scan
-  ansible.builtin.command: >
-    oscap xccdf eval
-    --profile {{ security_scans_oscap_profile }}
-    --results {{ security_scans_oscap_results_dir }}OpenScap_Results_{{ datetime }}.xml
-    {{ oscap_content_path }}
-  register: oscap_scan
-  failed_when: oscap_scan.rc == 1
-  changed_when: false
-
-- name: OpenSCAP - Generate Report
-  ansible.builtin.command: >
-    oscap xccdf generate report
-    --output {{ security_scans_oscap_results_dir }}OpenScap_Report_{{ datetime }}.html
-    {{ security_scans_oscap_results_dir }}OpenScap_Results_{{ datetime }}.xml
-  when: oscap_scan is succeeded
-  register: oscap_report
-  changed_when: false
-
-- name: OpenSCAP - Extract Score
-  ansible.builtin.shell: >
-    set -o pipefail &&
-    sed -n 's/.*<score[^>]*>\([0-9]\+\.[0-9]\+\)<\/score>.*/\1/p' {{ security_scans_oscap_results_dir }}OpenScap_Results_{{ datetime }}.xml
-    | xargs printf "%.2f\n"
-  args:
-    executable: /bin/bash
-  when: oscap_report is succeeded
-  register: cis_compliance_score
-  changed_when: false
-
-- name: OpenSCAP - Display Score and Report Location
-  ansible.builtin.debug:
-    msg:
-      - "CIS Level {{ security_scans_oscap_cis_level }} Compliance Score: {{ cis_compliance_score.stdout }}%"
-      - "Full report: lynx {{ security_scans_oscap_results_dir }}OpenScap_Report_{{ datetime }}.html"
-
-##################
-### Lynis Scan ###
-##################
-- name: Clone git repository
-  ansible.builtin.git:
-    repo: "{{ security_scans_lynis_repo_url }}"
-    dest: "{{ security_scans_lynis_install_path }}"
-    clone: true
-    version: "{{ security_scans_lynis_branch }}"
-
-- name: Confirm lynis folder
-  ansible.builtin.find:
-    paths: "{{ security_scans_lynis_install_path | dirname }}"
-    patterns: "{{ security_scans_lynis_install_path | basename }}*"
-    recurse: true
-    file_type: directory
-  register: found_directories
-
-- name: Display found lynis directories
-  ansible.builtin.debug:
-    msg: "{{ [item.path] }}"
-  with_items: "{{ found_directories.files }}"
-
-- name: Run scan and output to file
-  ansible.builtin.shell: ./lynis audit system > "$(hostname -s)_$(date +%d-%m-%Y).report"
-  args:
-    chdir: "{{ security_scans_lynis_install_path }}"
-  changed_when: true
-
-- name: Print out report
-  ansible.builtin.shell: cat "$(hostname -s)_$(date +%d-%m-%Y).report"
-  args:
-    chdir: "{{ security_scans_lynis_install_path }}"
-  register: lynis_report
-  changed_when: false
-
-- name: Display lynis report
-  ansible.builtin.debug:
-    msg: "{{ [item] }} "
-  with_items: "{{ lynis_report.stdout }}"
-
-- name: Remove lynis folder
-  ansible.builtin.file:
-    path: "{{ security_scans_lynis_install_path }}"
-    state: absent
-  when: security_scans_lynis_cleanup | bool
+- name: Display security scan results and scores
+  ansible.builtin.include_tasks: 08_display_results.yml

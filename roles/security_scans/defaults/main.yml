@@ -10,18 +10,19 @@ security_scans_required_packages:
   - systemd-journal-remote
   - sysstat
 
-# OpenSCAP configuration
-security_scans_oscap_target_os: rhel9
-security_scans_oscap_profile_type: cis_server  # Options: cis_server, cis_workstation, stig
-security_scans_oscap_cis_level: 1  # For CIS profiles: 1 or 2, ignored for STIG
-security_scans_oscap_results_dir: ~/
-security_scans_oscap_report_format: html
-# OpenSCAP configuration debug
-security_scans_oscap_list_available_datastreams: false
+# Security scans base directory
+security_scans_base_dir: /var/log/security-scans
+
+# OpenSCAP configuration | https://github.com/ComplianceAsCode/content/tree/master/products
+security_scans_oscap_target_os: rhel9 ######### rhel8, rhel10, alinux2 (Amazon), al2023 (Amazon) ### full list @ url above
+security_scans_oscap_profile: cis_server_l1 ### cis (CIS Server Level 2), stig (DISA STIG) ######### full list @ url above
 
 # Lynis configuration
 security_scans_lynis_repo_url: "https://github.com/CISOfy/lynis.git"
 security_scans_lynis_branch: master
-security_scans_lynis_install_path: $HOME/lynis
-security_scans_lynis_retain_reports: true
-security_scans_lynis_cleanup: true
+security_scans_lynis_install_path: /opt/lynis
+
+# Retention policy
+security_scans_retention_enabled: true
+security_scans_retention_count: 12 # Keep this number of complete scans (oscap.xml, oscap.html, lynis.report)
+security_scans_compress_files: true

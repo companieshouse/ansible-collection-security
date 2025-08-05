@@ -1,0 +1,76 @@
+---
+- name: Set content path
+  ansible.builtin.set_fact:
+    security_scans_oscap_content_path: "/usr/share/xml/scap/ssg/content/ssg-{{ security_scans_oscap_target_os }}-ds.xml"
+
+- name: Construct profile ID
+  ansible.builtin.set_fact:
+    security_scans_oscap_profile_id: "xccdf_org.ssgproject.content_profile_{{ security_scans_oscap_profile }}"
+
+- name: Run scan
+  ansible.builtin.command: >
+    oscap xccdf eval
+    --profile {{ security_scans_oscap_profile_id }}
+    --results {{ security_scans_temp_scan_dir.path }}/oscap.xml
+    {{ security_scans_oscap_content_path }}
+  register: security_scans_oscap_scan
+  failed_when: security_scans_oscap_scan.rc == 1
+  changed_when: false
+  become: true
+
+- name: Generate report
+  ansible.builtin.command: >
+    oscap xccdf generate report
+    --output {{ security_scans_temp_scan_dir.path }}/oscap.html
+    {{ security_scans_temp_scan_dir.path }}/oscap.xml
+  when: security_scans_oscap_scan is succeeded
+  register: security_scans_oscap_report
+  changed_when: false
+  become: true
+
+- name: Extract summary from HTML report
+  ansible.builtin.shell: |
+    set -o pipefail
+    if [ -f "{{ security_scans_temp_scan_dir.path }}/oscap.html" ]; then
+      lynx -dump "{{ security_scans_temp_scan_dir.path }}/oscap.html" | sed -n '/Evaluation target/,/Rule Overview/p' | head -n -1
+    fi
+  register: security_scans_oscap_summary
+  changed_when: false
+  become: true
+  when: security_scans_oscap_report is succeeded
+  args:
+    executable: /bin/bash
+
+- name: Display summary
+  ansible.builtin.debug:
+    var: item
+  with_items: "{{ security_scans_oscap_summary.stdout }}"
+  when: security_scans_oscap_summary.stdout is defined and security_scans_oscap_summary.stdout | length > 0
+
+- name: Deploy parse_oscap_failures script
+  ansible.builtin.template:
+    src: parse_oscap_failures.sh.j2
+    dest: "{{ security_scans_temp_scan_dir.path }}/parse_oscap_failures.sh"
+    mode: "0755"
+  become: true
+  when: security_scans_oscap_report is succeeded
+
+- name: Extract failed rules from HTML report
+  ansible.builtin.command: "{{ security_scans_temp_scan_dir.path }}/parse_oscap_failures.sh {{ security_scans_temp_scan_dir.path }}/oscap.html"
+  register: security_scans_oscap_failed_rules
+  changed_when: false
+  become: true
+  when: security_scans_oscap_report is succeeded
+
+- name: Display failed rules
+  ansible.builtin.debug:
+    var: item
+  with_items: "{{ security_scans_oscap_failed_rules.stdout }}"
+  when: security_scans_oscap_failed_rules.stdout is defined and security_scans_oscap_failed_rules.stdout | length > 0
+
+- name: Clean up parse_oscap_failures script
+  ansible.builtin.file:
+    path: "{{ security_scans_temp_scan_dir.path }}/parse_oscap_failures.sh"
+    state: absent
+  become: true
+  when: security_scans_oscap_report is succeeded

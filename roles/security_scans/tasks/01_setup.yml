@@ -1,0 +1,15 @@
+---
+- name: Install required packages
+  ansible.builtin.package:
+    name: "{{ security_scans_required_packages }}"
+    state: present
+  become: true
+
+- name: Create security scans base directory
+  ansible.builtin.file:
+    path: "{{ security_scans_base_dir }}"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  become: true

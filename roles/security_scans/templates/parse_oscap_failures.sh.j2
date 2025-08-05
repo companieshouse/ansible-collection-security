@@ -1,0 +1,24 @@
+#!/bin/bash
+# OpenSCAP HTML Report Failed Rules Parser
+# Extracts failed rules from OpenSCAP HTML reports in a human-readable format
+# Usage: parse_oscap_failures.sh <html_report_file>
+
+HTML_FILE="$1"
+
+if [ ! -f "$HTML_FILE" ]; then
+    echo "Error: HTML file '$HTML_FILE' not found" >&2
+    exit 1
+fi
+
+# Parse the HTML report to extract failed rules with their titles and severity
+lynx -dump "$HTML_FILE" | \
+  sed -n '/Rule Overview/,/Result Details/p' | \
+  perl -0777 -ne 'while(/(\[[0-9]+\][^\[]*?)   fail/gs){print "$1\n"}' | \
+  grep "^\[[0-9]\+\]" | \
+  sed 's/^[[:space:]]*//' | \
+  tr '\n' ' ' | \
+  sed 's/\[[0-9]\+\]/\n&/g' | \
+  grep "^\[[0-9]\+\]" | \
+  tr -s ' ' | \
+  sed 's/\]\([A-Z]\)/] \1/g' | \
+  sed 's/^/FAIL: /'

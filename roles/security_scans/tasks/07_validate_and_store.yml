@@ -1,0 +1,20 @@
+---
+- name: Validate scan completeness in temp directory
+  ansible.builtin.stat:
+    path: "{{ security_scans_temp_scan_dir.path }}/{{ item }}"
+  loop:
+    - oscap.xml
+    - oscap.html
+    - lynis.report
+  register: security_scans_scan_files
+
+- name: Fail if scan files are incomplete
+  ansible.builtin.fail:
+    msg: "Scan incomplete. Missing files: {{ security_scans_scan_files.results | selectattr('stat.exists', 'equalto', false) | map(attribute='item') | list }}"
+  when: not (security_scans_scan_files.results | map(attribute='stat.exists') | list | all)
+
+- name: Move completed scan files to final location
+  ansible.builtin.command: >
+    mv "{{ security_scans_temp_scan_dir.path }}" "{{ security_scans_base_dir }}/{{ security_scans_datetime }}"
+  become: true
+  changed_when: true
