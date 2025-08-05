@@ -64,7 +64,7 @@
 
 - name: Display failed rules
   ansible.builtin.debug:
-    var: item
+    msg: "{{ item }}"
   with_items: "{{ security_scans_oscap_failed_rules.stdout }}"
   when: security_scans_oscap_failed_rules.stdout is defined and security_scans_oscap_failed_rules.stdout | length > 0
 
