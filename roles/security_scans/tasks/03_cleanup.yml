@@ -1,7 +1,12 @@
 ---
 - name: Clean up old incomplete temp scan directories
   ansible.builtin.shell: |
-    find {{ security_scans_base_dir }} -name "security-scan-*" -type d -mmin +60 -exec rm -rf {} \; 2>/dev/null || true
+    # First: Remove failed scans older than 1 week
+    find {{ security_scans_base_dir }} -name "security-scan-*" -type d -mmin +{{ security_scans_failed_retention_hours * 60 }} -exec rm -rf {} \; 2>/dev/null || true
+
+    # Second: If more than 3 remain, only keep the most recent 3
+    cd {{ security_scans_base_dir }}
+    ls -dt security-scan-*/ 2>/dev/null | tail -n +{{ security_scans_failed_retention_count + 1 }} | xargs rm -rf 2>/dev/null || true
   become: true
   changed_when: false
 
@@ -22,7 +27,7 @@
     set -o pipefail
     # Clean old completed scan directories (only count directories matching YYYYMMDD_HHMMSS pattern)
     cd {{ security_scans_base_dir }}
-    ls -dt [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9]/ 2>/dev/null | tail -n +{{ security_scans_retention_count }} | xargs rm -rf 2>/dev/null || true
+    ls -dt [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9]/ 2>/dev/null | tail -n +{{ security_scans_retention_count + 1 }} | xargs rm -rf 2>/dev/null || true
   when: security_scans_retention_enabled | bool
   changed_when: false
   become: true

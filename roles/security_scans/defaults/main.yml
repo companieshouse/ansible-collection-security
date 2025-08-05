@@ -26,3 +26,5 @@ security_scans_lynis_install_path: /opt/lynis
 security_scans_retention_enabled: true
 security_scans_retention_count: 12 # Keep this number of complete scans (lynis.report, oscap.xml, oscap.html)
 security_scans_compress_files: true
+security_scans_failed_retention_hours: 168 # Keep failed scans for 1 week (24*7)
+security_scans_failed_retention_count: 3 # But never more than 3 failed scans
