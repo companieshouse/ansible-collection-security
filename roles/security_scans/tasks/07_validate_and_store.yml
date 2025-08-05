@@ -11,7 +11,7 @@
 - name: Fail if scan files are incomplete
   ansible.builtin.fail:
     msg: "Scan incomplete. Missing files: {{ security_scans_scan_files.results | selectattr('stat.exists', 'equalto', false) | map(attribute='item') | list }}"
-  when: not (security_scans_scan_files.results | map(attribute='stat.exists') | list | all)
+  when: (security_scans_scan_files.results | selectattr('stat.exists', 'equalto', true) | list | length) != (security_scans_scan_files.results | length)
 
 - name: Move completed scan files to final location
   ansible.builtin.command: >
