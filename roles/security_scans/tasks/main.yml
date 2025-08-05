@@ -11,11 +11,11 @@
 - name: Initialise scan workspace directory
   ansible.builtin.include_tasks: 04_initialise.yml
 
-- name: Execute OpenSCAP security scan
-  ansible.builtin.include_tasks: 05_openscap.yml
-
 - name: Execute Lynis security audit
-  ansible.builtin.include_tasks: 06_lynis.yml
+  ansible.builtin.include_tasks: 05_lynis.yml
+
+- name: Execute OpenSCAP security scan
+  ansible.builtin.include_tasks: 06_openscap.yml
 
 - name: Validate completeness and store scan results
   ansible.builtin.include_tasks: 07_validate_and_store.yml

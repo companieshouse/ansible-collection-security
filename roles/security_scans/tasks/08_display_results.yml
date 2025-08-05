@@ -1,4 +1,15 @@
 ---
+- name: Extract Lynis hardening index
+  ansible.builtin.shell: >
+    set -o pipefail &&
+    grep "Hardening index" "{{ security_scans_base_dir }}/{{ security_scans_datetime }}/lynis.report" |
+    sed 's/\x1b\[[0-9;]*m//g' |
+    grep -o '[0-9]\+'
+  register: security_scans_lynis_hardening_index
+  changed_when: false
+  become: true
+  failed_when: false
+
 - name: Extract OpenSCAP compliance score
   ansible.builtin.shell: >
     set -o pipefail &&
@@ -8,17 +19,6 @@
   args:
     executable: /bin/bash
   register: security_scans_cis_compliance_score
-  changed_when: false
-  become: true
-  failed_when: false
-
-- name: Extract Lynis hardening index
-  ansible.builtin.shell: >
-    set -o pipefail &&
-    grep "Hardening index" "{{ security_scans_base_dir }}/{{ security_scans_datetime }}/lynis.report" |
-    sed 's/\x1b\[[0-9;]*m//g' |
-    grep -o '[0-9]\+'
-  register: security_scans_lynis_hardening_index
   changed_when: false
   become: true
   failed_when: false
@@ -40,16 +40,16 @@
 - name: Set security scan scores as pipeline statistics
   ansible.builtin.set_stats:
     data:
-      OSCAP_SCORE: "{{ security_scans_cis_compliance_score.stdout | default('N/A') }}"
       LYNIS_SCORE: "{{ security_scans_lynis_hardening_index.stdout | default('N/A') }}"
+      OSCAP_SCORE: "{{ security_scans_cis_compliance_score.stdout | default('N/A') }}"
       OSCAP_PROFILE_DISPLAY: "{{ security_scans_oscap_profile_display }}"
 
 - name: Create formatted security scan summary
   ansible.builtin.shell: |
     printf "=== Security Scan Results ===\n"
     printf "Scan completed: {{ security_scans_datetime_readable.stdout }}\n"
-    printf "OpenSCAP {{ security_scans_oscap_profile }} Score: \033[1m{{ security_scans_cis_compliance_score.stdout | default('N/A') }}%%\033[0m\n"
     printf "Lynis Hardening Index: \033[1m{{ security_scans_lynis_hardening_index.stdout | default('N/A') }}%%\033[0m\n"
+    printf "OpenSCAP {{ security_scans_oscap_profile }} Score: \033[1m{{ security_scans_cis_compliance_score.stdout | default('N/A') }}%%\033[0m\n"
     printf "Reports available at: {{ security_scans_base_dir }}/{{ security_scans_datetime }}/\n"
   register: security_scans_summary_formatted
   changed_when: false

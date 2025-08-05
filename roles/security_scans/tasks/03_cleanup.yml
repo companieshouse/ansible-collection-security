@@ -8,9 +8,9 @@
 - name: Compress old scan files
   ansible.builtin.shell: |
     # Compress files in existing scan directories
+    find {{ security_scans_base_dir }} -maxdepth 2 -name "*.report" -not -name "*.gz" -exec gzip {} \; 2>/dev/null || true
     find {{ security_scans_base_dir }} -maxdepth 2 -name "*.xml" -not -name "*.gz" -exec gzip {} \; 2>/dev/null || true
     find {{ security_scans_base_dir }} -maxdepth 2 -name "*.html" -not -name "*.gz" -exec gzip {} \; 2>/dev/null || true
-    find {{ security_scans_base_dir }} -maxdepth 2 -name "*.report" -not -name "*.gz" -exec gzip {} \; 2>/dev/null || true
   when:
     - security_scans_retention_enabled | bool
     - security_scans_compress_files | bool

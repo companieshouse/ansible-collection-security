@@ -7,8 +7,6 @@
     update: true
   become: true
 
-
-
 - name: Run Lynis security audit scan
   ansible.builtin.shell: ./lynis audit system > "{{ security_scans_temp_scan_dir.path }}/lynis.report"
   args:

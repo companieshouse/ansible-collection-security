@@ -3,9 +3,9 @@
   ansible.builtin.stat:
     path: "{{ security_scans_temp_scan_dir.path }}/{{ item }}"
   loop:
+    - lynis.report
     - oscap.xml
     - oscap.html
-    - lynis.report
   register: security_scans_scan_files
 
 - name: Fail if scan files are incomplete
