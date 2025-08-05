@@ -30,7 +30,7 @@
 - name: Display lynis report
   ansible.builtin.shell: |
     set -o pipefail &&
-    cat "{{ security_scans_temp_scan_dir.path }}/lynis.report" | awk '/- Report data/ {exit} {print}'
+    cat "{{ security_scans_temp_scan_dir.path }}/lynis.report" | awk '/- Report data/ {exit} {print}' | tee /dev/stderr
   args:
     executable: /bin/bash
   changed_when: false
