@@ -7,7 +7,7 @@
   ansible.builtin.set_fact:
     security_scans_oscap_profile_id: "xccdf_org.ssgproject.content_profile_{{ security_scans_oscap_profile }}"
 
-- name: Run scan
+- name: Run OpenSCAP scan
   ansible.builtin.command: >
     oscap xccdf eval
     --profile {{ security_scans_oscap_profile_id }}
@@ -18,7 +18,7 @@
   changed_when: false
   become: true
 
-- name: Generate report
+- name: Generate OpenSCAP HTML report
   ansible.builtin.command: >
     oscap xccdf generate report
     --output {{ security_scans_temp_scan_dir.path }}/oscap.html
@@ -28,12 +28,37 @@
   changed_when: false
   become: true
 
-- name: Extract summary from HTML report
+- name: Extract and display OpenSCAP summary
   ansible.builtin.shell: |
     set -o pipefail
-    if [ -f "{{ security_scans_temp_scan_dir.path }}/oscap.html" ]; then
-      lynx -dump "{{ security_scans_temp_scan_dir.path }}/oscap.html" | sed -n '/Evaluation target/,/Rule Overview/p' | head -n -1
-    fi
+    HTML_FILE="{{ security_scans_temp_scan_dir.path }}/oscap.html"
+
+    # Extract characteristics (no colors)
+    echo "=== Evaluation Characteristics ==="
+    lynx -dump "$HTML_FILE" | awk '
+      /Evaluation Characteristics/ { found=1; next }
+      /Compliance and Scoring/ { found=0 }
+      found && NF > 0 { print }
+    '
+
+    echo ""
+    echo "=== Compliance and Scoring ==="
+
+    # Extract compliance section with simple colors
+    lynx -dump "$HTML_FILE" | awk '
+      /Compliance and Scoring/ { found=1; next }
+      /Rule Overview/ { found=0 }
+      found && NF > 0 {
+        # Apply colors - match numbers followed by words
+        gsub(/[0-9]+ passed/, "\033[0;32m&\033[0m")
+        gsub(/[0-9]+ failed/, "\033[0;31m&\033[0m")
+        gsub(/[0-9]+ high/, "\033[0;31m&\033[0m")
+        gsub(/[0-9]+ medium/, "\033[1;33m&\033[0m")
+        gsub(/[0-9]+ low/, "\033[0;36m&\033[0m")
+        gsub(/[0-9]+\.[0-9]+%/, "\033[1m&\033[0m")
+        print
+      }
+    '
   register: security_scans_oscap_summary
   changed_when: false
   become: true
@@ -41,10 +66,12 @@
   args:
     executable: /bin/bash
 
-- name: Display summary
+- name: Display OpenSCAP summary
   ansible.builtin.debug:
-    msg: "{{ security_scans_oscap_summary.stdout.split('\n') }}"
-  when: security_scans_oscap_summary.stdout is defined and security_scans_oscap_summary.stdout | length > 0
+    msg: ""
+  with_items:
+    - "\n{{ security_scans_oscap_summary.stdout }}"
+  when: security_scans_oscap_summary.stdout is defined
 
 - name: Deploy parse_oscap_failures script
   ansible.builtin.template:
@@ -61,9 +88,11 @@
   become: true
   when: security_scans_oscap_report is succeeded
 
-- name: Display failed rules
+- name: Display OpenSCAP failed rules
   ansible.builtin.debug:
-    msg: "{{ security_scans_oscap_failed_rules.stdout.split('\n') }}"
+    msg: ""
+  with_items:
+    - "\n{{ security_scans_oscap_failed_rules.stdout }}"
   when: security_scans_oscap_failed_rules.stdout is defined and security_scans_oscap_failed_rules.stdout | length > 0
 
 - name: Clean up parse_oscap_failures script

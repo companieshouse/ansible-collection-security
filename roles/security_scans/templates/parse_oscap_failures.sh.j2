@@ -21,4 +21,4 @@ lynx -dump "$HTML_FILE" | \
   grep "^\[[0-9]\+\]" | \
   tr -s ' ' | \
   sed 's/\]\([A-Z]\)/] \1/g' | \
-  sed 's/^/FAIL: /'
+  sed 's/^/\x1b[0;31mFAIL: /g; s/$/\x1b[0m/'
