@@ -43,7 +43,8 @@
 
 - name: Display summary
   ansible.builtin.debug:
-    msg: "{{ security_scans_oscap_summary.stdout }}"
+    msg: "{{ item }}"
+  with_items: "{{ security_scans_oscap_summary.stdout.split('\n') }}"
   when: security_scans_oscap_summary.stdout is defined and security_scans_oscap_summary.stdout | length > 0
 
 - name: Deploy parse_oscap_failures script
