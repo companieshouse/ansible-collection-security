@@ -27,11 +27,18 @@
   changed_when: true
   become: true
 
-- name: Display lynis report
+- name: Extract lynis report
   ansible.builtin.shell: |
     set -o pipefail &&
-    cat "{{ security_scans_temp_scan_dir.path }}/lynis.report" | awk '/- Report data/ {exit} {print}' >&2
+    cat "{{ security_scans_temp_scan_dir.path }}/lynis.report" | awk '/- Report data/ {exit} {print}'
   args:
     executable: /bin/bash
+  register: security_scans_lynis_output
   changed_when: false
   become: true
+
+- name: Display lynis report
+  ansible.builtin.debug:
+    msg: ""
+  with_items:
+    - "{{ security_scans_lynis_output.stdout }}"
