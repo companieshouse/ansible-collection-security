@@ -27,17 +27,11 @@
   changed_when: true
   become: true
 
-- name: Get truncated lynis report
+- name: Display lynis report
   ansible.builtin.shell: |
     set -o pipefail &&
-    cat "{{ security_scans_temp_scan_dir.path }}/lynis.report" | awk '/- Report data/ {exit} {print}'
+    cat "{{ security_scans_temp_scan_dir.path }}/lynis.report" | awk '/- Report data/ {exit} {print}' >&2
   args:
     executable: /bin/bash
-  register: lynis_truncated
   changed_when: false
   become: true
-
-- name: Display lynis report
-  ansible.builtin.debug:
-    msg: "{{ lynis_truncated.stdout }}"
-  with_items: "{{ lynis_truncated.stdout }}"
