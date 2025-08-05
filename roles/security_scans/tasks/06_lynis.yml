@@ -41,3 +41,4 @@
   ansible.builtin.debug:
     msg: "{{ [item] }}"
   with_items: "{{ security_scans_lynis_report.stdout }}"
+  no_log: true
