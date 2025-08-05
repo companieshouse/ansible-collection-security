@@ -1,7 +1,7 @@
 galaxy_info:
   role_name: security_scans
   author: Companies House
-  description: Install required packages for oscap and lynis then run both scans
+  description: Install required packages for lynis and oscap then run both scans
   company: Companies House
   license: MIT
   min_ansible_version: 2.9.10
