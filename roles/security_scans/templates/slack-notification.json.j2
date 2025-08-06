@@ -1,0 +1,65 @@
+{
+  "blocks": [
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": "*{{ instance_name }}*"
+      }
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "*OpenSCAP*"
+        },
+        {
+          "type": "mrkdwn",
+          "text": " "
+        },
+        {
+          "type": "mrkdwn",
+          "text": "{{ security_scans_oscap_profile_display }}"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*{{ security_scans_cis_compliance_score.stdout | default('N/A') }}%*"
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    },
+    {
+      "type": "section",
+      "fields": [
+        {
+          "type": "mrkdwn",
+          "text": "*Lynis*"
+        },
+        {
+          "type": "mrkdwn",
+          "text": " "
+        },
+        {
+          "type": "mrkdwn",
+          "text": "Hardening Index"
+        },
+        {
+          "type": "mrkdwn",
+          "text": "*{{ security_scans_lynis_hardening_index.stdout | default('N/A') }}%*"
+        }
+      ]
+    },
+    {
+      "type": "divider"
+    }
+  ]
+}

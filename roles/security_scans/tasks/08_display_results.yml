@@ -53,6 +53,12 @@
   register: security_scans_summary
   changed_when: false
 
+- name: Generate Slack notification file
+  ansible.builtin.template:
+    src: slack-notification.json.j2
+    dest: /tmp/security-scans-result.json
+    mode: "0644"
+
 - name: Display security scans summary
   ansible.builtin.debug:
     msg: ""
