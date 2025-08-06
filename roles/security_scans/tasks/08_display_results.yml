@@ -52,10 +52,10 @@
 
 - name: Create security scans summary
   ansible.builtin.shell: |
-    printf "Scan completed: \033[1m{{ security_scans_datetime_readable.stdout }}\033[0m\n"
+    printf "Scan finished at \033[1m{{ security_scans_datetime_readable.stdout }}\033[0m\n"
     printf "Lynis Hardening Index: \033[1m{{ security_scans_lynis_hardening_index.stdout | default('N/A') }}%%\033[0m\n"
     printf "OpenSCAP {{ security_scans_oscap_profile_display }} Score: \033[1m{{ security_scans_cis_compliance_score.stdout | default('N/A') }}%%\033[0m\n"
-    printf "Full report files stored in: \033[1m{{ security_scans_base_dir }}/{{ security_scans_datetime }}/\033[0m\n"
+    printf "Full report files available in: \033[1m{{ security_scans_base_dir }}/{{ security_scans_datetime }}/\033[0m\n"
   register: security_scans_summary
   changed_when: false
 
