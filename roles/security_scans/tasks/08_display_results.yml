@@ -27,8 +27,8 @@
   ansible.builtin.set_fact:
     security_scans_oscap_profile_display: >-
       {%- if security_scans_oscap_profile == 'cis_server_l1' -%}
-      CIS LEVEL 1{%- elif security_scans_oscap_profile == 'cis' -%}
-      CIS LEVEL 2{%- elif security_scans_oscap_profile == 'stig' -%}
+      CIS Level 1{%- elif security_scans_oscap_profile == 'cis' -%}
+      CIS Level 2{%- elif security_scans_oscap_profile == 'stig' -%}
       DISA STIG{%- else -%}
       {{ security_scans_oscap_profile | upper }}{%- endif -%}
 
