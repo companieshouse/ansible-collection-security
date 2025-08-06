@@ -33,7 +33,7 @@
       {{ security_scans_oscap_profile | upper }}{%- endif -%}
 
 - name: Set readable datetime
-  ansible.builtin.shell: date -u '+%Y-%m-%d %H:%M:%S UTC'
+  ansible.builtin.command: date -u '+%Y-%m-%d %H:%M:%S UTC'
   register: security_scans_datetime_readable
   changed_when: false
 
