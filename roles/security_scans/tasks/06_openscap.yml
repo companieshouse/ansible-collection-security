@@ -1,9 +1,9 @@
 ---
-- name: Set content path
+- name: Set OpenSCAP content path
   ansible.builtin.set_fact:
     security_scans_oscap_content_path: "/usr/share/xml/scap/ssg/content/ssg-{{ security_scans_oscap_target_os }}-ds.xml"
 
-- name: Construct profile ID
+- name: Construct OpenSCAP profile ID
   ansible.builtin.set_fact:
     security_scans_oscap_profile_id: "xccdf_org.ssgproject.content_profile_{{ security_scans_oscap_profile }}"
 
@@ -28,7 +28,7 @@
   changed_when: false
   become: true
 
-- name: Extract and display OpenSCAP summary
+- name: Extract OpenSCAP summary
   ansible.builtin.shell: |
     set -o pipefail
     HTML_FILE="{{ security_scans_temp_scan_dir.path }}/oscap.html"
@@ -81,7 +81,7 @@
   become: true
   when: security_scans_oscap_report is succeeded
 
-- name: Extract failed rules from HTML report
+- name: Extract OpenSCAP failed rules from HTML report
   ansible.builtin.command: "{{ security_scans_temp_scan_dir.path }}/parse_oscap_failures.sh {{ security_scans_temp_scan_dir.path }}/oscap.html"
   register: security_scans_oscap_failed_rules
   changed_when: false
@@ -95,7 +95,7 @@
     - "\n{{ security_scans_oscap_failed_rules.stdout }}"
   when: security_scans_oscap_failed_rules.stdout is defined and security_scans_oscap_failed_rules.stdout | length > 0
 
-- name: Clean up parse_oscap_failures script
+- name: Remove parse_oscap_failures script
   ansible.builtin.file:
     path: "{{ security_scans_temp_scan_dir.path }}/parse_oscap_failures.sh"
     state: absent

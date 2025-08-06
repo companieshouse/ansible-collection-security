@@ -1,5 +1,5 @@
 ---
-- name: Validate scan completeness in temp directory
+- name: Check temp directory contains the exepected files
   ansible.builtin.stat:
     path: "{{ security_scans_temp_scan_dir.path }}/{{ item }}"
   loop:
@@ -8,12 +8,12 @@
     - oscap.html
   register: security_scans_scan_files
 
-- name: Fail if scan files are incomplete
+- name: Fail if temp directory is missing files
   ansible.builtin.fail:
     msg: "Scan incomplete. Missing files: {{ security_scans_scan_files.results | selectattr('stat.exists', 'equalto', false) | map(attribute='item') | list }}"
   when: (security_scans_scan_files.results | selectattr('stat.exists', 'equalto', true) | list | length) != (security_scans_scan_files.results | length)
 
-- name: Clean oldest completed scan if at retention limit
+- name: Re-run clean of completed scans if at retention limit
   ansible.builtin.shell: |
     set -o pipefail
     cd {{ security_scans_base_dir }}
@@ -27,7 +27,7 @@
   args:
     executable: /bin/bash
 
-- name: Move completed scan files to final location
+- name: Rename temp folder and store as a completed scan
   ansible.builtin.command: >
     mv "{{ security_scans_temp_scan_dir.path }}" "{{ security_scans_base_dir }}/{{ security_scans_datetime }}"
   become: true

@@ -10,7 +10,6 @@ if [ ! -f "$HTML_FILE" ]; then
     exit 1
 fi
 
-# Parse the HTML report to extract failed rules with their titles and severity
 lynx -dump "$HTML_FILE" | \
   sed -n '/Rule Overview/,/Result Details/p' | \
   perl -0777 -ne 'while(/(\[[0-9]+\][^\[]*?)   fail/gs){print "$1\n"}' | \

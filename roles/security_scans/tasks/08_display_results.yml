@@ -23,7 +23,7 @@
   become: true
   failed_when: false
 
-- name: Set human-readable OpenSCAP profile name
+- name: Set readable OpenSCAP profile name
   ansible.builtin.set_fact:
     security_scans_oscap_profile_display: >-
       {%- if security_scans_oscap_profile == 'cis_server_l1' -%}
@@ -32,30 +32,30 @@
       DISA STIG{%- else -%}
       {{ security_scans_oscap_profile | upper }}{%- endif -%}
 
-- name: Get human-readable datetime
+- name: Set readable datetime
   ansible.builtin.shell: date -u '+%Y-%m-%d %H:%M:%S UTC'
   register: security_scans_datetime_readable
   changed_when: false
 
-- name: Set security scan scores as pipeline statistics
+- name: Set security scan scores as usable parameters
   ansible.builtin.set_stats:
     data:
       LYNIS_SCORE: "{{ security_scans_lynis_hardening_index.stdout | default('N/A') }}"
       OSCAP_SCORE: "{{ security_scans_cis_compliance_score.stdout | default('N/A') }}"
       OSCAP_PROFILE_DISPLAY: "{{ security_scans_oscap_profile_display }}"
 
-- name: Create formatted security scan summary
+- name: Create security scans summary
   ansible.builtin.shell: |
     printf "=== Security Scan Results ===\n"
     printf "Scan completed: {{ security_scans_datetime_readable.stdout }}\n"
     printf "Lynis Hardening Index: \033[1m{{ security_scans_lynis_hardening_index.stdout | default('N/A') }}%%\033[0m\n"
     printf "OpenSCAP {{ security_scans_oscap_profile_display }} Score: \033[1m{{ security_scans_cis_compliance_score.stdout | default('N/A') }}%%\033[0m\n"
     printf "Reports available at: {{ security_scans_base_dir }}/{{ security_scans_datetime }}/\n"
-  register: security_scans_summary_formatted
+  register: security_scans_summary
   changed_when: false
 
-- name: Display security scan scores summary
+- name: Display security scans summary
   ansible.builtin.debug:
     msg: ""
   with_items:
-    - "\n{{ security_scans_summary_formatted.stdout }}"
+    - "\n{{ security_scans_summary.stdout }}"

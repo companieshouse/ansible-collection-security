@@ -1,10 +1,10 @@
 ---
-- name: Verify target datastream exists
+- name: Validate target datastream
   ansible.builtin.stat:
     path: "/usr/share/xml/scap/ssg/content/ssg-{{ security_scans_oscap_target_os }}-ds.xml"
   register: security_scans_target_datastream_stat
 
-- name: Fail if target datastream doesn't exist
+- name: Fail if target datastream isn't found
   ansible.builtin.fail:
     msg: "The specified datastream 'ssg-{{ security_scans_oscap_target_os }}-ds.xml' does not exist."
   when: not security_scans_target_datastream_stat.stat.exists
@@ -27,7 +27,7 @@
   args:
     executable: /bin/bash
 
-- name: Fail if insufficient disk space
+- name: Fail if disk space insufficient
   ansible.builtin.fail:
     msg: "Insufficient disk space. Available: {{ security_scans_available_space.stdout }}KB, Required: 100MB minimum"
   when: security_scans_available_space.stdout | int < 102400

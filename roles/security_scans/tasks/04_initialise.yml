@@ -1,5 +1,5 @@
 ---
-- name: Set datetime variable
+- name: Set datetime
   ansible.builtin.set_fact:
     security_scans_datetime: "{{ lookup('pipe', 'date -u +%Y%m%d_%H%M%S') }}"
 
@@ -10,14 +10,7 @@
     mode: "0755"
     owner: root
     group: root
-  register: security_scans_temp_scan_dir_result
-  failed_when: false
   become: true
-
-- name: Fail if scan already in progress
-  ansible.builtin.fail:
-    msg: "Scan already in progress - temp directory exists: security-scan-{{ security_scans_datetime }}"
-  when: security_scans_temp_scan_dir_result is failed
 
 - name: Set temporary scan directory path
   ansible.builtin.set_fact:

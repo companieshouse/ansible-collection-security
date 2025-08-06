@@ -1,24 +1,24 @@
 ---
-- name: Install packages and create directories
+- name: Install packages and create directory
   ansible.builtin.include_tasks: 01_setup.yml
 
-- name: Validate system requirements and datastreams
+- name: Validate datastream, permissions, and available disk space
   ansible.builtin.include_tasks: 02_validation.yml
 
-- name: Clean up old scans and manage retention
+- name: Remove old scans inline with policy and compress those being retained
   ansible.builtin.include_tasks: 03_cleanup.yml
 
-- name: Initialise scan workspace directory
+- name: Initialise variable(s) and current scan directory
   ansible.builtin.include_tasks: 04_initialise.yml
 
-- name: Execute Lynis security audit
+- name: Run Lynis and generate report
   ansible.builtin.include_tasks: 05_lynis.yml
 
-- name: Execute OpenSCAP security scan
+- name: Run OpenSCAP and generate report
   ansible.builtin.include_tasks: 06_openscap.yml
 
-- name: Validate completeness and store scan results
+- name: Validate scans are complete, re-run retention cleaning if necessary, store scan results
   ansible.builtin.include_tasks: 07_validate_and_store.yml
 
-- name: Display security scan results and scores
+- name: Extract result variables for ouput and display final results
   ansible.builtin.include_tasks: 08_display_results.yml
