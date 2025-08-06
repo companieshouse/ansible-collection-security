@@ -13,6 +13,22 @@
     msg: "Scan incomplete. Missing files: {{ security_scans_scan_files.results | selectattr('stat.exists', 'equalto', false) | map(attribute='item') | list }}"
   when: (security_scans_scan_files.results | selectattr('stat.exists', 'equalto', true) | list | length) != (security_scans_scan_files.results | length)
 
+- name: Clean oldest completed scan if at retention limit
+  ansible.builtin.shell: |
+    set -o pipefail
+    cd {{ security_scans_base_dir }}
+    # Count completed scan directories
+    count=$(ls -dt [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9]/ 2>/dev/null | wc -l)
+    # If we're at the retention limit, make space for the new one
+    if [ "$count" -ge {{ security_scans_retention_count }} ]; then
+      ls -dt [0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]_[0-9][0-9][0-9][0-9][0-9][0-9]/ 2>/dev/null | tail -1 | xargs rm -rf 2>/dev/null || true
+    fi
+  when: security_scans_retention_enabled | bool
+  become: true
+  changed_when: false
+  args:
+    executable: /bin/bash
+
 - name: Move completed scan files to final location
   ansible.builtin.command: >
     mv "{{ security_scans_temp_scan_dir.path }}" "{{ security_scans_base_dir }}/{{ security_scans_datetime }}"
