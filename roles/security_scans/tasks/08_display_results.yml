@@ -50,6 +50,12 @@
     dest: /tmp/security-scans-result.json
     mode: "0644"
 
+- name: Fetch Slack notification file
+  ansible.builtin.fetch:
+    src: /tmp/security-scans-result.json
+    dest: /tmp/security-scans-result.json
+    flat: true
+
 - name: Create security scans summary
   ansible.builtin.shell: |
     printf "Scan finished at \033[1m{{ security_scans_datetime_readable.stdout }}\033[0m\n"
