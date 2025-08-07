@@ -1,0 +1,33 @@
+---
+- name: Validate target datastream
+  ansible.builtin.stat:
+    path: "/usr/share/xml/scap/ssg/content/ssg-{{ security_scans_oscap_target_os }}-ds.xml"
+  register: security_scans_target_datastream_stat
+
+- name: Fail if target datastream isn't found
+  ansible.builtin.fail:
+    msg: "The specified datastream 'ssg-{{ security_scans_oscap_target_os }}-ds.xml' does not exist."
+  when: not security_scans_target_datastream_stat.stat.exists
+
+- name: Validate base directory permissions
+  ansible.builtin.file:
+    path: "{{ security_scans_base_dir }}"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  become: true
+
+- name: Check available disk space
+  ansible.builtin.shell: |
+    set -o pipefail
+    df {{ security_scans_base_dir }} | awk 'NR==2 {print $4}'
+  register: security_scans_available_space
+  changed_when: false
+  args:
+    executable: /bin/bash
+
+- name: Fail if disk space insufficient
+  ansible.builtin.fail:
+    msg: "Insufficient disk space. Available: {{ security_scans_available_space.stdout }}KB, Required: 100MB minimum"
+  when: security_scans_available_space.stdout | int < 102400

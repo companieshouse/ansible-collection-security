@@ -2,5 +2,8 @@
 .DS_Store
 ._*
 
+# Ansible
+.ansible
+
 # Ansible Galaxy
 galaxy.yml

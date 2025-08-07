@@ -1,0 +1,18 @@
+---
+- name: Set datetime
+  ansible.builtin.set_fact:
+    security_scans_datetime: "{{ lookup('pipe', 'date -u +%Y%m%d_%H%M%S') }}"
+
+- name: Create temporary scan directory
+  ansible.builtin.file:
+    path: "{{ security_scans_base_dir }}/security-scan-{{ security_scans_datetime }}"
+    state: directory
+    mode: "0755"
+    owner: root
+    group: root
+  become: true
+
+- name: Set temporary scan directory path
+  ansible.builtin.set_fact:
+    security_scans_temp_scan_dir:
+      path: "{{ security_scans_base_dir }}/security-scan-{{ security_scans_datetime }}"

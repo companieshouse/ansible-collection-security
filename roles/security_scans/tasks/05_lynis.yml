@@ -1,0 +1,31 @@
+---
+- name: Clone or update Lynis repository
+  ansible.builtin.git:
+    repo: "{{ security_scans_lynis_repo_url }}"
+    dest: "{{ security_scans_lynis_install_path }}"
+    version: "{{ security_scans_lynis_branch }}"
+    update: true
+  become: true
+
+- name: Run Lynis scan
+  ansible.builtin.shell: ./lynis audit system > "{{ security_scans_temp_scan_dir.path }}/lynis.report"
+  args:
+    chdir: "{{ security_scans_lynis_install_path }}"
+  changed_when: true
+  become: true
+
+- name: Extract Lynis report
+  ansible.builtin.shell: |
+    set -o pipefail &&
+    cat "{{ security_scans_temp_scan_dir.path }}/lynis.report" | awk '/- Report data/ {exit} {print}'
+  args:
+    executable: /bin/bash
+  register: security_scans_lynis_report
+  changed_when: false
+  become: true
+
+- name: Display Lynis report
+  ansible.builtin.debug:
+    msg: ""
+  with_items:
+    - "{{ security_scans_lynis_report.stdout }}"
