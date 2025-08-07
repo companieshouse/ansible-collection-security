@@ -17,7 +17,7 @@
 - name: Run OpenSCAP and generate report
   ansible.builtin.include_tasks: 06_openscap.yml
 
-- name: Validate scans are complete, re-run retention cleaning if necessary, store scan results
+- name: Validate scans are complete, re-run retention cleaning, store scan results
   ansible.builtin.include_tasks: 07_validate_and_store.yml
 
 - name: Extract result variables for ouput and display final results
