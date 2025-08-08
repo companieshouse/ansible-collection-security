@@ -14,6 +14,6 @@
         "short": true
       }
     ],
-    "color": "{% if (security_scans_lynis_hardening_index.stdout | int < 60) or (security_scans_oscap_compliance_score.stdout | float < 70.0) %}danger{% elif (security_scans_lynis_hardening_index.stdout | int < 80) or (security_scans_oscap_compliance_score.stdout | float < 85.0) %}warning{% else %}good{% endif %}"
+    "color": "{% if (security_scans_lynis_hardening_index.stdout | int < 65) or (security_scans_oscap_compliance_score.stdout | float < 70.0) %}danger{% elif (security_scans_lynis_hardening_index.stdout | int < 75) or (security_scans_oscap_compliance_score.stdout | float < 80.0) %}warning{% else %}good{% endif %}"
   }
 ]
