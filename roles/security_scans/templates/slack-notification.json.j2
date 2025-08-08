@@ -1,65 +1,19 @@
-{
-  "blocks": [
-    {
-      "type": "divider"
-    },
-    {
-      "type": "section",
-      "text": {
-        "type": "mrkdwn",
-        "text": "*{{ ansible_hostname }}*"
+[
+  {
+    "fallback": "{{ ansible_hostname }} security scan results",
+    "pretext": "*<$ATC_EXTERNAL_URL/teams/$BUILD_TEAM_NAME/pipelines/$BUILD_PIPELINE_NAME/jobs/$BUILD_JOB_NAME/builds/$BUILD_NAME|$BUILD_JOB_NAME>*",
+    "fields": [
+      {
+        "title": "Lynis Hardening Index",
+        "value": "{% if security_scans_lynis_hardening_index.stdout %}{{ security_scans_lynis_hardening_index.stdout }}%{% else %}n/a{% endif %}",
+        "short": true
+      },
+      {
+        "title": "OpenSCAP {{ security_scans_oscap_profile_display }}",
+        "value": "{% if security_scans_oscap_compliance_score.stdout %}{{ security_scans_oscap_compliance_score.stdout }}%{% else %}n/a{% endif %}",
+        "short": true
       }
-    },
-    {
-      "type": "divider"
-    },
-    {
-      "type": "section",
-      "fields": [
-        {
-          "type": "mrkdwn",
-          "text": "*Lynis*"
-        },
-        {
-          "type": "mrkdwn",
-          "text": " "
-        },
-        {
-          "type": "mrkdwn",
-          "text": "Hardening Index"
-        },
-        {
-          "type": "mrkdwn",
-          "text": "*{{ security_scans_lynis_hardening_index.stdout | default('N/A') }}%*"
-        }
-      ]
-    },
-    {
-      "type": "divider"
-    },
-    {
-      "type": "section",
-      "fields": [
-        {
-          "type": "mrkdwn",
-          "text": "*OpenSCAP*"
-        },
-        {
-          "type": "mrkdwn",
-          "text": " "
-        },
-        {
-          "type": "mrkdwn",
-          "text": "{{ security_scans_oscap_profile_display }}"
-        },
-        {
-          "type": "mrkdwn",
-          "text": "*{{ security_scans_oscap_compliance_score.stdout | default('N/A') }}%*"
-        }
-      ]
-    },
-    {
-      "type": "divider"
-    }
-  ]
-}
+    ],
+    "color": "{% if (security_scans_lynis_hardening_index.stdout | int < 60) or (security_scans_oscap_compliance_score.stdout | float < 70.0) %}danger{% elif (security_scans_lynis_hardening_index.stdout | int < 80) or (security_scans_oscap_compliance_score.stdout | float < 85.0) %}warning{% else %}good{% endif %}"
+  }
+]
