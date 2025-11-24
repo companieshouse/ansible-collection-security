@@ -14,7 +14,7 @@ The role defaults (see [defaults/main.yml](defaults/main.yml)) specify the:
 A full list of available OpenSCAP OS targets and profiles can be viewed here:
 [https://github.com/ComplianceAsCode/content/tree/master/products](https://github.com/ComplianceAsCode/content/tree/master/products)
 
-`security_scans_oscap_target_os` can be used to target an alterate OS (e.g. rhel8, rhel10, alinux2 (Amazon), al2023 (Amazon)).
+`security_scans_oscap_target_os` can be used to target an alterate OS (e.g. rhel8, rhel10, al2023 (Amazon)).
 
 `security_scans_oscap_profile` is used to choose a different profile (e.g. cis (CIS Server Level 2), stig (DISA STIG)).
 
