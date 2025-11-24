@@ -1,11 +1,9 @@
 ---
 - name: Install required packages
-  ansible.builtin.package:
+  ansible.builtin.dnf:
     name: "{{ security_scans_required_packages }}"
     state: present
   become: true
-  vars:
-    ansible_python_interpreter: auto_silent
 
 - name: Create security scans base directory
   ansible.builtin.file:
