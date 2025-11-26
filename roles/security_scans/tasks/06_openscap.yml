@@ -10,10 +10,10 @@
   changed_when: false
   become: true
 
-- name: Parse avalable OpenSCAP profiles information
+- name: Parse available OpenSCAP profiles information
   ansible.builtin.set_fact:
-    security_scans_oscap_version: "{{ security_scans_available_profiles.stdout | regex_search('Benchmark version\\s+([0-9.]+)', '\\1') | first }}"
-    security_scans_oscap_version_timestamp: "{{ security_scans_available_profiles.stdout | regex_search('Generated:\\s+([0-9-]+)', '\\1') | first }}"
+    security_scans_oscap_version: "{{ security_scans_available_profiles.stdout | regex_search('Version:\\s+([0-9.]+)', '\\1') | default(['unknown'], true) | first }}"
+    security_scans_oscap_version_timestamp: "{{ security_scans_available_profiles.stdout | regex_search('\\s+Generated:\\s+([0-9-]+)', '\\1') | default(['unknown'], true) | first }}"
     security_scans_oscap_profiles_raw: "{{ security_scans_available_profiles.stdout }}"
 
 - name: Extract list of available OpenSCAP profiles
@@ -36,6 +36,13 @@
   changed_when: false
   args:
     executable: /bin/bash
+
+- name: Check if any OpenSCAP profiles were found
+  ansible.builtin.fail:
+    msg: |-
+      No OpenSCAP profiles found for {{ security_scans_oscap_target_os }}.
+      Check against the supported OS list: https://github.com/ComplianceAsCode/content/tree/master/products
+  when: security_scans_oscap_profiles_list.stdout | length == 0
 
 - name: Display available OpenSCAP profiles information
   ansible.builtin.debug:
