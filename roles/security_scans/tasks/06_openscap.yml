@@ -42,7 +42,7 @@
   ansible.builtin.debug:
     msg: |-
       Warning: Could not extract available OpenSCAP profiles.
-      The format may have changed, or there are no profiles available.
+      The format may have changed, or there are none available.
       Scan will be attempted with your given profile: {{ security_scans_oscap_profile }}
       Upon failure, inspect the oscap info output: {{ security_scans_oscap_content_path }}
   when: security_scans_oscap_profiles_list.stdout | length == 0
