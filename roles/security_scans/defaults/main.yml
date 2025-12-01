@@ -9,6 +9,7 @@ security_scans_required_packages:
   - hostname
   - systemd-journal-remote
   - sysstat
+  - git
 
 # Security scans base directory
 security_scans_base_dir: /var/log/security-scans
