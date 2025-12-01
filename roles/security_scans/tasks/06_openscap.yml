@@ -12,8 +12,14 @@
 
 - name: Parse available OpenSCAP profiles information
   ansible.builtin.set_fact:
-    security_scans_oscap_version: "{{ security_scans_available_profiles.stdout | regex_search('Version:\\s+([0-9.]+)', '\\1') | default(['unknown'], true) | first }}"
-    security_scans_oscap_version_timestamp: "{{ security_scans_available_profiles.stdout | regex_search('\\s+Generated:\\s+([0-9-]+)', '\\1') | default(['unknown'], true) | first }}"
+    security_scans_oscap_version: >-
+      {{ security_scans_available_profiles.stdout |
+         regex_search('Version:\\s+([0-9.]+)', '\\1') |
+         default(['unknown'], true) | first }}
+    security_scans_oscap_version_timestamp: >-
+      {{ security_scans_available_profiles.stdout |
+         regex_search('\\s+Generated:\\s+([0-9-]+)', '\\1') |
+         default(['unknown'], true) | first }}
     security_scans_oscap_profiles_raw: "{{ security_scans_available_profiles.stdout }}"
 
 - name: Extract list of available OpenSCAP profiles
@@ -49,14 +55,11 @@
 
 - name: Display available OpenSCAP profiles information
   ansible.builtin.debug:
-    msg: ""
-  with_items:
-    - |
-
-      === Available OpenSCAP Profile(s) ===
-      Content version: \033[1m{{ security_scans_oscap_version }}\033[0m (generated {{ security_scans_oscap_version_timestamp }})
-
-      \033[1m{{ security_scans_oscap_profiles_list.stdout }}\033[0m
+    msg: >-
+      {{ "\n=== Available OpenSCAP Profile(s) ===\n" +
+         "Content version: \033[1m" + security_scans_oscap_version + "\033[0m " +
+         "(generated " + security_scans_oscap_version_timestamp + ")\n\n" +
+         "\033[1m" + security_scans_oscap_profiles_list.stdout + "\033[0m\n" }}
 
 - name: Construct OpenSCAP profile ID
   ansible.builtin.set_fact:
