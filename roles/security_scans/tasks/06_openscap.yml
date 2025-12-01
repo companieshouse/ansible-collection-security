@@ -13,13 +13,11 @@
 - name: Parse available OpenSCAP profiles information
   ansible.builtin.set_fact:
     security_scans_oscap_version: >-
-      {{ security_scans_available_profiles.stdout |
-         regex_search('Version:\\s+([0-9.]+)', '\\1') |
-         default(['unknown'], true) | first }}
+      {{ (security_scans_available_profiles.stdout |
+      regex_findall('Version:\\s+([0-9.]+)') | first) | default('unknown', true) }}
     security_scans_oscap_version_timestamp: >-
-      {{ security_scans_available_profiles.stdout |
-         regex_search('\\s+Generated:\\s+([0-9-]+)', '\\1') |
-         default(['unknown'], true) | first }}
+      {{ (security_scans_available_profiles.stdout |
+      regex_findall('\\s+Generated:\\s+([0-9-]+)') | first) | default('unknown', true) }}
     security_scans_oscap_profiles_raw: "{{ security_scans_available_profiles.stdout }}"
 
 - name: Extract list of available OpenSCAP profiles
