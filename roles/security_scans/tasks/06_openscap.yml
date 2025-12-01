@@ -34,24 +34,29 @@
     '
   register: security_scans_oscap_profiles_list
   changed_when: false
+  failed_when: false
   args:
     executable: /bin/bash
 
 - name: Check if any OpenSCAP profiles were found
-  ansible.builtin.fail:
+  ansible.builtin.debug:
     msg: |-
-      No OpenSCAP profiles found for {{ security_scans_oscap_target_os }}.
-      Check against the supported OS list: https://github.com/ComplianceAsCode/content/tree/master/products
+      Warning: Could not extract available OpenSCAP profiles.
+      The format may have changed, or there are none available.
+      Scan will be attempted with given profile: {{ security_scans_oscap_profile }}
+      Upon failure, inspect the info output: {{ security_scans_oscap_content_path }}
   when: security_scans_oscap_profiles_list.stdout | length == 0
 
 - name: Display available OpenSCAP profiles information
   ansible.builtin.debug:
-    msg: |-
+    msg: ""
+  with_items:
+    - |
 
-      === Available OpenSCAP Profiles ===
-      Content version: {{ security_scans_oscap_version }} (generated {{ security_scans_oscap_version_timestamp }})
+      === Available OpenSCAP Profile(s) ===
+      Content version: \033[1m{{ security_scans_oscap_version }}\033[0m (generated {{ security_scans_oscap_version_timestamp }})
 
-      {{ security_scans_oscap_profiles_list.stdout }}
+      \033[1m{{ security_scans_oscap_profiles_list.stdout }}\033[0m
 
 - name: Construct OpenSCAP profile ID
   ansible.builtin.set_fact:
@@ -112,6 +117,7 @@
   register: security_scans_oscap_summary
   changed_when: false
   become: true
+  failed_when: false
   when: security_scans_oscap_report is succeeded
   args:
     executable: /bin/bash
@@ -137,6 +143,13 @@
   changed_when: false
   become: true
   when: security_scans_oscap_report is succeeded
+
+- name: Check if OpenSCAP failed rules were extracted
+  ansible.builtin.debug:
+    msg: |-
+      Warning: Could not extract failed OpenSCAP rules, format may have changed.
+      Full report available at: {{ security_scans_temp_scan_dir.path }}/oscap.html
+  when: security_scans_oscap_report is succeeded and security_scans_oscap_failed_rules.failed is defined and security_scans_oscap_failed_rules.failed
 
 - name: Display OpenSCAP failed rules
   ansible.builtin.debug:
