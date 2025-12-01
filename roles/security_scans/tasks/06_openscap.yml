@@ -46,12 +46,12 @@
 
 - name: Display available OpenSCAP profiles information
   ansible.builtin.debug:
-    msg: ""
-  with_items:
-    - >-
-      \n=== Available OpenSCAP Profiles ===
-      \nContent version: {{ security_scans_oscap_version }} (generated {{ security_scans_oscap_version_timestamp }})
-      \n\n{{ security_scans_oscap_profiles_list.stdout }}
+    msg: |-
+
+      === Available OpenSCAP Profiles ===
+      Content version: {{ security_scans_oscap_version }} (generated {{ security_scans_oscap_version_timestamp }})
+
+      {{ security_scans_oscap_profiles_list.stdout }}
 
 - name: Construct OpenSCAP profile ID
   ansible.builtin.set_fact:
