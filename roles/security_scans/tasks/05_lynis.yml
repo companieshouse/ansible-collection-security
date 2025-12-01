@@ -23,9 +23,18 @@
   register: security_scans_lynis_report
   changed_when: false
   become: true
+  failed_when: false
+
+- name: Check if Lynis report was extracted
+  ansible.builtin.debug:
+    msg: |-
+      Warning: Could not parse Lynis report, format may have changed.
+      Full report available at: {{ security_scans_temp_scan_dir.path }}/lynis.report
+  when: security_scans_lynis_report.stdout is not defined or security_scans_lynis_report.stdout | length == 0
 
 - name: Display Lynis report
   ansible.builtin.debug:
     msg: ""
   with_items:
     - "{{ security_scans_lynis_report.stdout }}"
+  when: security_scans_lynis_report.stdout is defined and security_scans_lynis_report.stdout | length > 0
