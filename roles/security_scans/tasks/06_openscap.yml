@@ -51,13 +51,19 @@
       Upon failure, inspect the info output: {{ security_scans_oscap_content_path }}
   when: security_scans_oscap_profiles_list.stdout | length == 0
 
+- name: Format available OpenSCAP profiles information
+  ansible.builtin.shell: |
+    printf "\n=== Available OpenSCAP Profile(s) ===\n"
+    printf "Content version: \033[1m{{ security_scans_oscap_version }}\033[0m (generated {{ security_scans_oscap_version_timestamp }})\n\n"
+    printf "\033[1m{{ security_scans_oscap_profiles_list.stdout }}\033[0m\n"
+  register: security_scans_oscap_profiles_display
+  changed_when: false
+
 - name: Display available OpenSCAP profiles information
   ansible.builtin.debug:
-    msg: >-
-      {{ "\n=== Available OpenSCAP Profile(s) ===\n" +
-         "Content version: \033[1m" + security_scans_oscap_version + "\033[0m " +
-         "(generated " + security_scans_oscap_version_timestamp + ")\n\n" +
-         "\033[1m" + security_scans_oscap_profiles_list.stdout + "\033[0m\n" }}
+    msg: ""
+  with_items:
+    - "{{ security_scans_oscap_profiles_display.stdout }}"
 
 - name: Construct OpenSCAP profile ID
   ansible.builtin.set_fact:
