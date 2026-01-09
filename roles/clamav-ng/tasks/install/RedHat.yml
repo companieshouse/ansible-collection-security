@@ -10,7 +10,7 @@
       failed_when: true
       when:
         - ansible_distribution_major_version == '9'
-        -  not (ansible_distribution_version|float >= '9.2'|float)
+        - not (ansible_distribution_version|float >= '9.2'|float)
 
     - name: Install | Check if the RHUI repository file is disabled
       ansible.builtin.stat:
@@ -21,7 +21,7 @@
       ansible.builtin.copy:
         src: /etc/yum.repos.d/redhat-rhui.repo.disabled
         dest: /etc/yum.repos.d/redhat-rhui.repo
-        remote_src: yes
+        remote_src: true
       when: repo_disabled.stat.exists
 
     - name: Install | Verify the RHUI repository file is present
