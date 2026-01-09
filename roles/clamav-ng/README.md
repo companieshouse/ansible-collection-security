@@ -59,7 +59,7 @@ Role Variables
 | clamav_ng_clamav_logfilemaxsize        | The maximum log file size permitted before ClamAV will rotate the file        | `5M`                                      |
 | clamav_ng_clamav_maxthreads            | The maximum number of threads ClamAV will spawn during scanning               | `"{{ ansible_processor_nproc + 1 }}"`     |
 | clamav_ng_clamav_maxdirectoryrecursion | The maximum depth ClamAV will recursively scan in to directories              | `30`                                      |
-| clamav_ng_clamav_exclude_paths         | System paths to be excluded from automated scanning                           | `["/dev/", "/proc/", "/sys/", "/run/", "/etc/", "/var/log/audit/", "/var/lib/selinux/", "/var/lib/amazon/ssm/ipc/"] |
+| clamav_ng_clamav_exclude_paths         | System paths to be excluded from automated scanning                           | `["/dev/", "/proc/", "/sys/", "/run/", "/etc/", "/var/log/audit/", "/var/lib/selinux/", "/var/lib/amazon/ssm/ipc/"]` |
 | clamav_ng_clamonacc_enabled            | Whether or not the ClamAV On-Access Scanner is enabled                        | `false`                                   |
 | clamav_ng_clamonacc_service            | Whether ClamAV on-accerss scanner runs as a service                           | `true`                                    |
 | clamav_ng_clamonacc_service_name       | The on-access scanner's service name                                          | `clamav-clamonacc`                        |
