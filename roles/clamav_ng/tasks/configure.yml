@@ -7,7 +7,7 @@
     group: "{{ clamav_ng_clamav_group }}"
     mode: '0644'
   register: clamd_config
-  notify: restart clamav service
+  notify: Restart clamav service
 
 - name: Configure | Install Freshclam configuration file
   ansible.builtin.template:
@@ -201,7 +201,7 @@
   when:
     - freshclam_config.changed
     - clamav_ng_freshclam_service
-  notify: restart freshclam service
+  notify: Restart freshclam service
 
 - name: Configure | Restart ClamAV on-access service if present
   ansible.builtin.assert: { that: true, quiet: true }
@@ -210,4 +210,4 @@
     - clamd_config.changed
     - clamav_ng_clamonacc_enabled
     - clamav_ng_clamonacc_service
-  notify: restart clamonacc service
+  notify: Restart clamonacc service

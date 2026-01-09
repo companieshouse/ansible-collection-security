@@ -1,4 +1,4 @@
-clamav-ng
+clamav_ng
 =========
 
 A one-for-all ClamAV role that installs and configures ClamAV for use within Companies House. This role will also attempt to utilise and, where necessary, clean-up legacy ClamAV configuration baked in to launch AMIs.
@@ -91,7 +91,7 @@ Example Playbook
 ```yaml
   - hosts: all
     roles:
-       - { role: clamav-ng, clamav_ng_freshclam_privatemirror: "my-clamav-mirror.example.com" }
+       - { role: clamav_ng, clamav_ng_freshclam_privatemirror: "my-clamav-mirror.example.com" }
 ```
 
 License
