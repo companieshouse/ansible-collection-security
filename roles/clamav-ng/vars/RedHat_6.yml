@@ -31,5 +31,3 @@ clamav_ng_freshclam_service: false
 clamav_ng_freshclam_cron: true
 clamav_ng_freshclam_group: clam
 clamav_ng_freshclam_user: clam
-
-clamav_ng_freshclam_privatemirror: clamav-mirror.sharedservices.aws.internal
