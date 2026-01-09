@@ -25,7 +25,6 @@ clamav_ng_run_socket_file: clamd.sock
 clamav_ng_run_group: virusgroup
 clamav_ng_run_user: "{{ clamav_ng_clamav_user }}"
 
-clamav_ng_rhel_epel_install_from_url: false
 clamav_ng_rhel_epel_repo_file: /etc/yum.repos.d/epel.repo
 clamav_ng_rhel_epel_repo_url: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_facts.distribution_major_version }}.noarch.rpm"
 clamav_ng_rhel_epel_repo_gpg_key_url: "https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-{{ ansible_facts.distribution_major_version }}"

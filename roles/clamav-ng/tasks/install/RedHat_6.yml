@@ -1,10 +1,32 @@
 ---
-- name: Install | Install EPEL repository
-  ansible.builtin.yum:
-    name: epel-release
-    state: present
+- name: Install | Install packages
+  block:
+    - name: Install | Check if EPEL is already installed
+      ansible.builtin.stat:
+        path: "{{ clamav_ng_rhel_epel_repo_file }}"
+      register: epel_repo_file
 
-- name: Install | Install packages via yum
-  ansible.builtin.yum:
-    name: "{{ clamav_ng_install_packages }}"
-    state: present
+    - name: Install | Import EPEL GPG key
+      ansible.builtin.rpm_key:
+        key: "{{ clamav_ng_rhel_epel_repo_gpg_key_url }}"
+        state: present
+      when: not epel_repo_file.stat.exists
+
+    - name: Install | Install EPEL repository
+      ansible.builtin.yum:
+        name: "{{ clamav_ng_rhel_epel_repo_url }}"
+        state: present
+      when: not epel_repo_file.stat.exists
+
+    - name: Install | Enable the EPEL repository
+      ansible.builtin.ini_file:
+        path: "{{ clamav_ng_rhel_epel_repo_file }}"
+        section: epel
+        option: enabled
+        value: "1"
+        no_extra_spaces: true
+
+    - name: Install | Install packages via yum
+      ansible.builtin.yum:
+        name: "{{ clamav_ng_install_packages }}"
+        state: present

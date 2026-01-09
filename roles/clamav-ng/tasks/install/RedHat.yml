@@ -47,17 +47,13 @@
       ansible.builtin.rpm_key:
         key: "{{ clamav_ng_rhel_epel_repo_gpg_key_url }}"
         state: present
-      when:
-        - clamav_ng_rhel_epel_install_from_url
-        - not epel_repo_file.stat.exists
+      when: not epel_repo_file.stat.exists
 
     - name: Install | Install EPEL repository
       ansible.builtin.dnf:
         name: "{{ clamav_ng_rhel_epel_repo_url }}"
         state: present
-      when:
-        - clamav_ng_rhel_epel_install_from_url
-        - not epel_repo_file.stat.exists
+      when: not epel_repo_file.stat.exists
 
     - name: Install | Enable the EPEL repository
       ansible.builtin.ini_file:

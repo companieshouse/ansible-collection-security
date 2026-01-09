@@ -2,6 +2,8 @@
 clamav_ng_install_packages:
   - clamav
 
+clamav_ng_rhel_epel_repo_url: "https://archives.fedoraproject.org/pub/archive/epel/6/x86_64/epel-release-6-8.noarch.rpm"
+
 clamav_ng_db_group: clam
 clamav_ng_db_user: clam
 
