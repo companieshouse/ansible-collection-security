@@ -1,0 +1,35 @@
+---
+clamav_ng_install_packages:
+  - clamav
+
+clamav_ng_rhel_epel_repo_url: "https://archives.fedoraproject.org/pub/archive/epel/6/x86_64/epel-release-6-8.noarch.rpm"
+
+clamav_ng_db_group: clam
+clamav_ng_db_user: clam
+
+clamav_ng_log_group: clam
+
+clamav_ng_run_directory: /var/run/clamav
+clamav_ng_run_group: clam
+
+clamav_ng_clamav_config_file: /etc/clamd.conf
+clamav_ng_clamav_service_name: clamd
+clamav_ng_clamav_group: clam
+clamav_ng_clamav_user: clam
+clamav_ng_clamav_localsocketgroup: clam
+clamav_ng_clamav_exclude_paths:
+  - /dev/
+  - /proc/
+  - /sys/
+  - /etc/
+  - /selinux/
+  - /var/lib/amazon/ssm/ipc/
+
+clamav_ng_clamonacc_service: false
+clamav_ng_clamonacc_distro_options:
+  - "ScanOnAccess yes"
+
+clamav_ng_freshclam_service: false
+clamav_ng_freshclam_cron: true
+clamav_ng_freshclam_group: clam
+clamav_ng_freshclam_user: clam

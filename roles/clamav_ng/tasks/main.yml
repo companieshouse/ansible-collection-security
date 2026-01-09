@@ -1,0 +1,27 @@
+---
+# tasks file for clamav_ng
+- name: Load OS specific vars
+  ansible.builtin.include_vars: "{{ lookup('ansible.builtin.first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_distribution }}_{{ ansible_distribution_major_version }}.yml"
+        - "{{ ansible_os_family }}_{{ ansible_distribution_major_version }}.yml"
+        - "{{ ansible_distribution }}.yml"
+        - "{{ ansible_os_family }}.yml"
+        - main.yml
+      paths:
+        - 'vars'
+
+- name: Verify a private mirror has been provided
+  ansible.builtin.assert:
+    that:
+      - lookup('vars', 'clamav_ng_freshclam_privatemirror') is defined
+      - lookup('vars', 'clamav_ng_freshclam_privatemirror') | length > 0
+    fail_msg: "clamav_ng_freshclam_privatemirror must be provided"
+
+- name: Install
+  ansible.builtin.include_tasks: install.yml
+
+- name: Configure
+  ansible.builtin.include_tasks: configure.yml

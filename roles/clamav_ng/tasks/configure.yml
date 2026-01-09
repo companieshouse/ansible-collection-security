@@ -1,0 +1,213 @@
+---
+- name: Configure | Install ClamAV configuration file
+  ansible.builtin.template:
+    src: clamd.conf.j2
+    dest: "{{ clamav_ng_clamav_config_file }}"
+    owner: "{{ clamav_ng_clamav_user }}"
+    group: "{{ clamav_ng_clamav_group }}"
+    mode: '0644'
+  register: clamd_config
+  notify: Restart clamav service
+
+- name: Configure | Install Freshclam configuration file
+  ansible.builtin.template:
+    src: freshclam.conf.j2
+    dest: "{{ clamav_ng_freshclam_config_file }}"
+    owner: "{{ clamav_ng_freshclam_user }}"
+    group: "{{ clamav_ng_freshclam_group }}"
+    mode: '0644'
+  register: freshclam_config
+
+- name: Configure | Get freshclam binary path
+  ansible.builtin.shell: which freshclam # noqa: command-instead-of-shell
+  register: freshclam_path
+  changed_when: false
+
+- name: Configure | Check for existing Freshclam cron configurations
+  block:
+    - name: Configure | List user crontabs
+      ansible.builtin.command: "ls -1 {{ clamav_ng_crontab_spool_path }}"
+      register: user_crontab_list
+      changed_when: false
+
+    - name: Configure | Verify user crontabs are present
+      ansible.builtin.set_fact:
+        user_crontabs_present: true
+      when: user_crontab_list.stdout != ""
+      changed_when: false
+
+    - name: Configure | Comment existing Freshclam entries in user crontabs
+      ansible.builtin.replace:
+        dest: "/var/spool/cron/{{ item }}"
+        regexp: '^([^#].*freshclam.*)$'
+        replace: '#\1'
+      loop: "{{ user_crontab_list.stdout_lines }}"
+      when: user_crontabs_present is defined
+
+- name: Configure | Install crontab for freshclam database updates
+  ansible.builtin.cron:
+    cron_file: clamav-ng-freshclam
+    name: "freshclam"
+    job: "{{ freshclam_path.stdout }} --config-file={{ clamav_ng_freshclam_config_file }} > /dev/null 2>&1"
+    minute: "{{ 60 | ansible.builtin.random(seed=inventory_hostname) }}"
+    hour: "*/4"
+    state: present
+    user: "{{ clamav_ng_freshclam_user }}"
+  when:
+    - not clamav_ng_freshclam_service
+    - clamav_ng_freshclam_cron
+
+- name: Configure | Setup clamdscan daily system scan
+  when: clamav_ng_clamdscan_enabled
+  block:
+    - name: Configure | Deploy system scan script
+      ansible.builtin.template:
+        src: clamdscan.sh.j2
+        dest: /usr/local/bin/clamav-ng-clamdscan.sh
+        owner: root
+        group: root
+        mode: '0750'
+
+    - name: Configure | Install crontab for clamdscan system scan
+      ansible.builtin.cron:
+        cron_file: clamav-ng-clamdscan
+        name: "clamdscan"
+        job: "/usr/local/bin/clamav-ng-clamdscan.sh"
+        minute: "{{ 60 | ansible.builtin.random(seed=inventory_hostname) }}"
+        hour: "{{ clamav_ng_clamsdcan_window_end_hour | ansible.builtin.random(start=clamav_ng_clamdscan_window_start_hour, seed=inventory_hostname) }}"
+        state: present
+        user: root
+
+- name: Configure | Remove conflicting legacy cron drop-in files
+  block:
+    - name: Configure | Check for conflicting clamav-update cron drop-in file
+      ansible.builtin.stat:
+        path: /etc/cron.d/clamav-update
+      register: clamav_update
+      changed_when: false
+
+    - name: Configure | Remove clamav-update cron drop-in
+      ansible.builtin.file:
+        path: /etc/cron.d/clamav-update
+        state: absent
+      when: clamav_update.stat.exists
+
+    - name: Configure | Check for conflicting clamav-scan cron drop-in file
+      ansible.builtin.stat:
+        path: /etc/cron.d/clamav-scan
+      register: clamav_scan
+      changed_when: false
+
+    - name: Configure | Remove clamav-scan cron drop-in
+      ansible.builtin.file:
+        path: /etc/cron.d/clamav-scan
+        state: absent
+      when: clamav_scan.stat.exists
+
+- name: Configure | Perform OS-specific tasks
+  ansible.builtin.include_tasks: "{{ lookup('ansible.builtin.first_found', params) }}"
+  vars:
+    params:
+      files:
+        - "{{ ansible_distribution }}_{{ ansible_distribution_major_version }}.yml"
+        - "{{ ansible_os_family }}_{{ ansible_distribution_major_version }}.yml"
+        - "{{ ansible_distribution }}.yml"
+        - "{{ ansible_os_family }}.yml"
+        - main.yml
+      paths:
+        - 'tasks/configure'
+
+- name: Configure | Update freshclam database if necessary
+  block:
+    - name: Configure | Check for existing main.cvd
+      ansible.builtin.stat:
+        path: "{{ clamav_ng_db_directory }}/main.cvd"
+      register: main_db_file
+      changed_when: false
+
+    - name: Configure | Check age of existing main.cvd
+      ansible.builtin.set_fact:
+        main_db_age: "{{ (ansible_date_time.epoch | float - main_db_file.stat.mtime) }}"
+      when: main_db_file.stat.exists
+      changed_when: false
+
+    - name: Configure | Check for existing main.cld
+      ansible.builtin.stat:
+        path: "{{ clamav_ng_db_directory }}/main.cld"
+      register: main_db_uncompressed_file
+      changed_when: false
+
+    - name: Configure | Check age of existing main.cld
+      ansible.builtin.set_fact:
+        main_db_age: "{{ (ansible_date_time.epoch | float - main_db_uncompressed_file.stat.mtime) }}"
+      when:
+        - main_db_uncompressed_file.stat.exists
+      changed_when: false
+
+    - name: Configure | Ensure freshclam service is stopped
+      ansible.builtin.service:
+        name: "{{ clamav_ng_freshclam_service_name }}"
+        state: stopped
+      when: clamav_ng_freshclam_service
+      changed_when: false
+
+    - name: Configure | Execute freshclam to update database files # noqa: no-changed-when
+      ansible.builtin.shell: "{{ freshclam_path.stdout }} --config-file={{ clamav_ng_freshclam_config_file }}" # noqa: command-instead-of-shell
+      when: (not (main_db_file.stat.exists or main_db_uncompressed_file.stat.exists)) or
+            (main_db_age|float > (3 * 86400))
+
+- name: Configure | Get current setting for inotify max_user_watches # noqa: no-changed-when
+  ansible.builtin.command: sysctl -n fs.inotify.max_user_watches
+  register: sysctl
+  when: clamav_ng_clamonacc_enabled
+
+- name: Configure | Increase inotify max_user_watches limits for on-access scanning
+  ansible.posix.sysctl:
+    name: fs.inotify.max_user_watches
+    value: '524288'
+    reload: true
+    state: present
+    sysctl_set: true
+  when:
+    - clamav_ng_clamonacc_enabled
+    - (sysctl.stdouu|int < 524288)
+    - sysctl.rc == 0
+
+- name: Configure | Enable and start the Freshclam service
+  ansible.builtin.service:
+    name: "{{ clamav_ng_freshclam_service_name }}"
+    enabled: true
+    state: started
+  when: clamav_ng_freshclam_service
+
+- name: Configure | Enable and start the ClamAV service
+  ansible.builtin.service:
+    name: "{{ clamav_ng_clamav_service_name }}"
+    enabled: true
+    state: started
+
+- name: Configure | Enable and start the ClamAV on-access scanner service
+  ansible.builtin.service:
+    name: "{{ clamav_ng_clamonacc_service_name }}"
+    enabled: true
+    state: started
+  when:
+    - clamav_ng_clamonacc_enabled
+    - clamav_ng_clamonacc_service
+
+- name: Configure | Restart Freshclam service if present
+  ansible.builtin.assert: { that: true, quiet: true }
+  changed_when: true
+  when:
+    - freshclam_config.changed
+    - clamav_ng_freshclam_service
+  notify: Restart freshclam service
+
+- name: Configure | Restart ClamAV on-access service if present
+  ansible.builtin.assert: { that: true, quiet: true }
+  changed_when: true
+  when:
+    - clamd_config.changed
+    - clamav_ng_clamonacc_enabled
+    - clamav_ng_clamonacc_service
+  notify: Restart clamonacc service
