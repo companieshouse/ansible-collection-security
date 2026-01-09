@@ -3,7 +3,7 @@ galaxy_info:
   description: Installs and configures a standardised base ClamAV configuration
   company: Companies House
   license: MIT
-  min_ansible_version: 2.9
+  min_ansible_version: "2.9"
   galaxy_tags:
     - antivirus
     - clamav

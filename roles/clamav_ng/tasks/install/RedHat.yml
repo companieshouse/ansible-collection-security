@@ -21,6 +21,9 @@
       ansible.builtin.copy:
         src: /etc/yum.repos.d/redhat-rhui.repo.disabled
         dest: /etc/yum.repos.d/redhat-rhui.repo
+        owner: root
+        group: root
+        mode: '0644'
         remote_src: true
       when: repo_disabled.stat.exists
 
@@ -30,8 +33,11 @@
       register: repo_exists
 
     - name: Install | Enable CodeReady repository
-      ansible.builtin.ini_file:
+      community.general.ini_file:
         dest: /etc/yum.repos.d/redhat-rhui.repo
+        owner: root
+        group: root
+        mode: '0644'
         section: "codeready-builder-for-rhel-{{ ansible_distribution_major_version }}-rhui-rpms"
         option: enabled
         value: "1"
@@ -56,8 +62,11 @@
       when: not epel_repo_file.stat.exists
 
     - name: Install | Enable the EPEL repository
-      ansible.builtin.ini_file:
+      community.general.ini_file:
         path: "{{ clamav_ng_rhel_epel_repo_file }}"
+        owner: root
+        group: root
+        mode: '0644'
         section: epel
         option: enabled
         value: "1"

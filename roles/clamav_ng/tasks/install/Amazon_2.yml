@@ -1,6 +1,6 @@
 ---
 - name: Install | Install packages via yum
-  ansible.builtin.yum:
+  ansible.builtin.yum: # noqa: fqcn[action-core]
     name: "{{ clamav_ng_install_packages }}"
     state: present
 

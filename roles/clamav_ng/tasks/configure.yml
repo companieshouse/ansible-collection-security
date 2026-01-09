@@ -19,14 +19,14 @@
   register: freshclam_config
 
 - name: Configure | Get freshclam binary path
-  ansible.builtin.shell: which freshclam
+  ansible.builtin.shell: which freshclam # noqa: command-instead-of-shell
   register: freshclam_path
   changed_when: false
 
 - name: Configure | Check for existing Freshclam cron configurations
   block:
     - name: Configure | List user crontabs
-      ansible.builtin.shell: "ls -1 {{ clamav_ng_crontab_spool_path }}"
+      ansible.builtin.command: "ls -1 {{ clamav_ng_crontab_spool_path }}"
       register: user_crontab_list
       changed_when: false
 
@@ -58,6 +58,7 @@
     - clamav_ng_freshclam_cron
 
 - name: Configure | Setup clamdscan daily system scan
+  when: clamav_ng_clamdscan_enabled
   block:
     - name: Configure | Deploy system scan script
       ansible.builtin.template:
@@ -76,7 +77,6 @@
         hour: "{{ clamav_ng_clamsdcan_window_end_hour | ansible.builtin.random(start=clamav_ng_clamdscan_window_start_hour, seed=inventory_hostname) }}"
         state: present
         user: root
-  when: clamav_ng_clamdscan_enabled
 
 - name: Configure | Remove conflicting legacy cron drop-in files
   block:
@@ -127,7 +127,7 @@
 
     - name: Configure | Check age of existing main.cvd
       ansible.builtin.set_fact:
-        main_db_age: "{{ (ansible_date_time.epoch|float - main_db_file.stat.mtime) }}"
+        main_db_age: "{{ (ansible_date_time.epoch | float - main_db_file.stat.mtime) }}"
       when: main_db_file.stat.exists
       changed_when: false
 
@@ -139,7 +139,7 @@
 
     - name: Configure | Check age of existing main.cld
       ansible.builtin.set_fact:
-        main_db_age: "{{ (ansible_date_time.epoch|float - main_db_uncompressed_file.stat.mtime) }}"
+        main_db_age: "{{ (ansible_date_time.epoch | float - main_db_uncompressed_file.stat.mtime) }}"
       when:
         - main_db_uncompressed_file.stat.exists
       changed_when: false
@@ -151,12 +151,12 @@
       when: clamav_ng_freshclam_service
       changed_when: false
 
-    - name: Configure | Execute freshclam to update database files
-      ansible.builtin.shell: "{{ freshclam_path.stdout }} --config-file={{ clamav_ng_freshclam_config_file }}"
+    - name: Configure | Execute freshclam to update database files # noqa: no-changed-when
+      ansible.builtin.shell: "{{ freshclam_path.stdout }} --config-file={{ clamav_ng_freshclam_config_file }}" # noqa: command-instead-of-shell
       when: (not (main_db_file.stat.exists or main_db_uncompressed_file.stat.exists)) or
             (main_db_age|float > (3 * 86400))
 
-- name: Configure | Get current setting for inotify max_user_watches
+- name: Configure | Get current setting for inotify max_user_watches # noqa: no-changed-when
   ansible.builtin.command: sysctl -n fs.inotify.max_user_watches
   register: sysctl
   when: clamav_ng_clamonacc_enabled

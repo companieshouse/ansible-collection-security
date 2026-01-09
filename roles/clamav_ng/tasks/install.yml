@@ -55,6 +55,7 @@
     state: directory
 
 - name: Install | Perform SELinux actions
+  when: clamav_ng_selinux_enabled
   block:
     - name: Install | Check SELinux status
       ansible.builtin.command: getenforce
@@ -81,7 +82,7 @@
       register: selinux_contexts
       when: selinux_status.stdout == 'Enforcing'
 
-    - name: Install | Execute restorecon to relabel files
+    - name: Install | Execute restorecon to relabel files # noqa: no-changed-when
       ansible.builtin.command: "restorecon -irv {{ item }}"
       loop:
         - "{{ clamav_ng_db_directory }}"
@@ -90,4 +91,3 @@
       when:
         - selinux_contexts.changed
         - selinux_status.stdout == 'Enforcing'
-  when: clamav_ng_selinux_enabled
