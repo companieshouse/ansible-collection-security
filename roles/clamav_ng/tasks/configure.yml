@@ -170,7 +170,7 @@
     sysctl_set: true
   when:
     - clamav_ng_clamonacc_enabled
-    - (sysctl.stdouu|int < 524288)
+    - (sysctl.stdout|int < 524288)
     - sysctl.rc == 0
 
 - name: Configure | Enable and start the Freshclam service
