@@ -1,0 +1,13 @@
+---
+galaxy_info:
+  author: Companies House
+  description: Explicitly updates specified packages to the latest available, useful in case of releases pinning, minimum ver enforcement
+  company: Companies House
+  license: MIT
+  min_ansible_version: "2.15.6"
+  galaxy_tags:
+    - cve
+    - dnf
+    - patching
+    - yum
+dependencies: []

@@ -1,0 +1,91 @@
+---
+- name: Apply package overrides
+  when: package_overrides_list | length > 0
+  vars:
+    package_overrides_minimums: >-
+      {{ package_overrides_list | selectattr('min_version', 'defined')
+         | rejectattr('min_version', 'none') | list }}
+    package_overrides_repoquery: >-
+      {{ (ansible_facts['pkg_mgr'] == 'dnf')
+         | ternary(['dnf', '--quiet', '--cacheonly', 'repoquery'], ['repoquery']) }}
+  block:
+    - name: Gather package manager facts
+      ansible.builtin.setup:
+        gather_subset:
+          - "!all"
+      when: ansible_facts['pkg_mgr'] is not defined
+
+    - name: Assert the host uses a supported package manager
+      ansible.builtin.assert:
+        that:
+          - ansible_facts['pkg_mgr'] in ['dnf', 'yum']
+        fail_msg: >-
+          package_overrides supports dnf and yum hosts only;
+          this host uses {{ ansible_facts['pkg_mgr'] }}.
+        quiet: true
+
+    - name: Assert releasever is only set on dnf hosts
+      ansible.builtin.assert:
+        that:
+          - ansible_facts['pkg_mgr'] == 'dnf' or item.releasever | default(none) is none
+        fail_msg: >-
+          releasever is only supported with dnf. Remove it from the {{ item.name }}
+          entry in package_overrides_list for {{ ansible_facts['pkg_mgr'] }} hosts.
+        quiet: true
+      loop: "{{ package_overrides_list }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Update override packages with dnf
+      ansible.builtin.dnf:
+        name: "{{ item.name }}"
+        state: latest
+        update_only: true
+        releasever: "{{ item.releasever | default(omit, true) }}"
+      loop: "{{ package_overrides_list }}"
+      loop_control:
+        label: "{{ item.name }}{{ (' (' ~ item.reason ~ ')') if item.reason | default(none) else '' }}"
+      when: ansible_facts['pkg_mgr'] == 'dnf'
+
+    - name: Update override packages with yum
+      ansible.builtin.package:
+        name: "{{ item.name }}"
+        state: latest
+        update_only: true
+      loop: "{{ package_overrides_list }}"
+      loop_control:
+        label: "{{ item.name }}{{ (' (' ~ item.reason ~ ')') if item.reason | default(none) else '' }}"
+      when: ansible_facts['pkg_mgr'] == 'yum'
+
+    - name: Ensure repoquery is available on yum hosts
+      ansible.builtin.package:
+        name: yum-utils
+        state: present
+      when:
+        - ansible_facts['pkg_mgr'] == 'yum'
+        - package_overrides_minimums | length > 0
+
+    - name: Query installed packages meeting minimum versions
+      ansible.builtin.command:
+        argv: >-
+          {{ package_overrides_repoquery
+             + ['--installed', '--queryformat', '%{name}', '--whatprovides', item.name ~ ' >= ' ~ item.min_version] }}
+      loop: "{{ package_overrides_minimums }}"
+      loop_control:
+        label: "{{ item.name }} >= {{ item.min_version }}"
+      register: package_overrides_version_check
+      changed_when: false
+      check_mode: false
+
+    - name: Assert minimum package versions are installed
+      ansible.builtin.assert:
+        that:
+          - item.item.name in item.stdout_lines
+        fail_msg: >-
+          {{ item.item.name }} is below the required minimum {{ item.item.min_version }}
+          ({{ item.item.reason | default('no reason given') }}). Check the vendor advisory
+          and the installed version with "rpm -q {{ item.item.name }}".
+        quiet: true
+      loop: "{{ package_overrides_version_check.results }}"
+      loop_control:
+        label: "{{ item.item.name }} >= {{ item.item.min_version }}"
