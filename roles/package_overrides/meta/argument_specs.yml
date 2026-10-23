@@ -1,0 +1,41 @@
+---
+argument_specs:
+  main:
+    short_description: Explicitly updates specified packages to the latest available, useful in case of releases pinning, minimum ver enforcement
+    description:
+      - Explicitly updates specified packages to latest available, useful in with locked package amis (e.g. al2023).
+      - Includes optional minimum ver enforcement.
+      - Listed packages are only updated if already present, this isn't intended for installing new packages.
+      - Place this role early in the play, so later roles can benefit from the updated package(s).
+    options:
+      package_overrides_list:
+        type: list
+        elements: dict
+        required: false
+        default: []
+        description: >-
+          Packages to update explicitly.
+        options:
+          name:
+            type: str
+            required: true
+            description: >-
+              RPM package name, e.g. ca-certificates.
+          releasever:
+            type: str
+            required: false
+            description: >-
+              dnf hosts only: release to resolve the package against, e.g. "latest"
+              on Amazon Linux 2023.
+          min_version:
+            type: str
+            required: false
+            description: >-
+              Minimum installed version, as `version` or `version-release`.
+              Compared using RPM ordering; the role fails if not met.
+          reason:
+            type: str
+            required: false
+            description: >-
+              Why the override exists, e.g. a CVE or advisory ID. Shown in task
+              output and failure messages.
