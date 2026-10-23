@@ -36,6 +36,22 @@
       loop_control:
         label: "{{ item.name }}"
 
+    - name: Gather installed package facts
+      ansible.builtin.package_facts:
+        manager: rpm
+      when: package_overrides_minimums | length > 0
+
+    - name: Assert packages with a minimum version are installed
+      ansible.builtin.assert:
+        that:
+          - item.name in ansible_facts['packages']
+        fail_msg: >-
+          {{ item.name }} is not installed; can't progress as min_version won't be satisfied.
+        quiet: true
+      loop: "{{ package_overrides_minimums }}"
+      loop_control:
+        label: "{{ item.name }}"
+
     - name: Update override packages with dnf
       ansible.builtin.dnf:
         name: "{{ item.name }}"

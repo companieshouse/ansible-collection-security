@@ -31,8 +31,8 @@ argument_specs:
             type: str
             required: false
             description: >-
-              Minimum acceptable installed version, as version or version-release,
-              e.g. "2025.2.80" or "2025.2.80_v9.0.305-91". The role fails if this is not met.
+              Minimum installed version, as `version` or `version-release`.
+              Compared using RPM ordering; the role fails if not met.
           reason:
             type: str
             required: false
